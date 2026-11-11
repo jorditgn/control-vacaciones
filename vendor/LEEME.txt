@@ -1,0 +1,1 @@
+Librerias de PDF copiadas aqui para que la app funcione sin red: jsPDF 2.5.1 y jspdf-autotable 3.8.2.
