@@ -1,0 +1,78 @@
+CONTROL DE VACACIONES — manual de uso
+=====================================
+
+Qué es
+------
+Una aplicación para el móvil que apunta los días de vacaciones de cada
+trabajador. Cada día del año es laborable o festivo. Las vacaciones se
+apuntan por día suelto o por grupo de días; un grupo puede incluir
+festivos, pero como vacaciones sólo se cuentan los laborables.
+
+Todo se guarda en el móvil. No hay cuenta ni servidor. Funciona sin
+cobertura una vez abierta la primera vez.
+
+
+Instalarla
+----------
+1. Abrir en Chrome del Android: https://jorditgn.github.io/control-vacaciones/
+2. Menú ⋮ → «Añadir a pantalla de inicio» (o «Instalar aplicación»).
+3. Abrirla siempre desde el icono (morado, con un calendario).
+
+
+Primeros pasos
+--------------
+1. Crear el trabajador: nombre, DNI y días laborables de vacaciones al año.
+2. Ajustes → Empresa: nombre, CIF y localidad (salen en los documentos).
+3. Calendario → «Festivos y días no laborables»:
+   - marcar qué días de la semana no se trabajan (de entrada, sábado y domingo);
+   - pulsar «Añadir los festivos nacionales» del año;
+   - tocar en el calendario los festivos autonómicos y locales.
+   Hay que hacerlo UNA VEZ POR AÑO. Si un año no tiene festivos marcados,
+   la app lo avisa.
+
+
+Apuntar vacaciones
+------------------
+Inicio → «Apuntar vacaciones».
+- Un día suelto: tocar el día y Guardar.
+- Un grupo: tocar el primer día y después el último, y Guardar.
+Abajo se ve en todo momento cuántos laborables y naturales suma lo elegido.
+
+  Laborables = días del periodo que no son festivos ni no laborables.
+  Naturales  = todos los días del periodo, festivos incluidos.
+
+No se puede guardar un periodo que pise a otro del mismo trabajador, ni
+uno que no tenga ningún día laborable.
+
+
+Justificante para firmar
+------------------------
+Tocar un periodo (en Inicio, en el Calendario o en Informes) → «PDF» o
+«Compartir». El documento lleva el periodo, los laborables, los naturales,
+la fecha de reincorporación, los festivos incluidos y sitio para las dos
+firmas.
+
+
+Resumen anual
+-------------
+Informes → elegir trabajador y año → «PDF» o «Compartir». Lista todos los
+periodos del año con sus laborables y naturales, los totales, los días al
+año y los pendientes. Un periodo que empieza un año y acaba al siguiente
+se reparte: a cada año, sus días.
+
+
+Copia de seguridad  (IMPORTANTE)
+--------------------------------
+Los datos están sólo en el móvil. Si se pierde el móvil o se borran los
+datos de Chrome, se pierde todo lo que no esté en una copia.
+- Ajustes → «Enviar copia» → Drive. Una vez al mes.
+- Para recuperar: instalar la app y Ajustes → «Restaurar».
+- La copia es un fichero vacaciones-copia-FECHA.txt. Sólo sirve para esta
+  app, no para el Diario ni para Control de horas.
+- OJO: «Borrar datos del sitio» en Chrome borra los datos de TODAS las
+  apps de jorditgn.github.io a la vez. Antes, copia de cada una.
+
+
+Versión
+-------
+Se ve en Ajustes, abajo del todo.

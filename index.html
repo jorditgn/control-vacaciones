@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="es" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6d28d9">
+<title>Control de vacaciones</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<style>
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --card2:#fafbfc; --text:#12181d; --muted:#67737e;
+  --line:#e2e6ea; --line2:#eef1f4;
+  --accent:#6d28d9; --accent-ink:#ffffff; --accent-soft:#ede9fe;
+  --danger:#c62828; --danger-soft:#fdecec;
+  --ok:#1b7f3b; --ok-soft:#e7f5ec;
+  --warn:#8a5a00; --warn-soft:#fff5e0;
+  --sel:#e0a100;
+  --r:14px; --r-sm:10px;
+  --sh:0 1px 2px rgba(16,24,32,.06), 0 1px 3px rgba(16,24,32,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1317; --card:#171d23; --card2:#1d242b; --text:#e8edf2; --muted:#93a1ad;
+    --line:#2a333c; --line2:#222a31;
+    --accent:#a78bfa; --accent-ink:#1a0b3b; --accent-soft:#2a1f47;
+    --danger:#ff6b6b; --danger-soft:#2d1a1a;
+    --ok:#4ade80; --ok-soft:#14271b;
+    --warn:#fbbf5c; --warn-soft:#2b2113;
+    --sel:#f2c14e;
+    --sh:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1317; --card:#171d23; --card2:#1d242b; --text:#e8edf2; --muted:#93a1ad;
+  --line:#2a333c; --line2:#222a31;
+  --accent:#a78bfa; --accent-ink:#1a0b3b; --accent-soft:#2a1f47;
+  --danger:#ff6b6b; --danger-soft:#2d1a1a;
+  --ok:#4ade80; --ok-soft:#14271b;
+  --warn:#fbbf5c; --warn-soft:#2b2113;
+  --sel:#f2c14e;
+  --sh:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  padding-bottom:calc(74px + env(safe-area-inset-bottom));
+  overflow-wrap:break-word;
+}
+body.sinnav{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+a{color:var(--accent);text-decoration:none}
+input,select,textarea,button{font:inherit;color:inherit}
+
+/* ---------- cabecera ---------- */
+header.top{
+  position:sticky; top:0; z-index:30; background:var(--card);
+  border-bottom:1px solid var(--line);
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  display:flex; align-items:center; gap:12px; min-height:56px;
+}
+header.top .ttl{font-size:17px;font-weight:650;flex:1;min-width:0}
+header.top .sub{font-size:12.5px;color:var(--muted);font-weight:400;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{
+  background:transparent;border:0;padding:8px;margin:-8px;border-radius:50%;
+  display:grid;place-items:center;cursor:pointer;color:var(--text);flex:0 0 auto;
+}
+.iconbtn:active{background:var(--line2)}
+.iconbtn svg{width:22px;height:22px;display:block}
+
+main{padding:14px 16px 20px; max-width:620px; margin:0 auto}
+
+/* ---------- piezas ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
+.card.pad{padding:14px}
+.card-h{padding:12px 14px;border-bottom:1px solid var(--line2);font-size:13px;font-weight:650;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mt{margin-top:14px}
+.mb{margin-bottom:10px}
+.hr{height:1px;background:var(--line2);margin:12px 0}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;padding:0 16px;border-radius:var(--r-sm);
+  border:1px solid var(--line);background:var(--card);cursor:pointer;
+  font-weight:600;font-size:15px;
+}
+.btn:active{transform:scale(.985)}
+.btn.block{display:flex;width:100%}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--danger);border-color:var(--line)}
+.btn.danger.fill{background:var(--danger-soft);border-color:var(--danger-soft)}
+.btn.big{min-height:62px;font-size:17px;border-radius:var(--r)}
+.btn svg{width:19px;height:19px;flex:0 0 auto}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.btnrow>.btn{flex:1 1 auto}
+
+/* listas pulsables */
+.lst{display:block}
+.li{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:13px 14px;background:var(--card);border:0;border-top:1px solid var(--line2);
+  cursor:pointer;min-height:58px;
+}
+.li:first-child{border-top:0}
+.li:active{background:var(--card2)}
+.li .gro{flex:1;min-width:0}
+.li .t{font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .s{font-size:12.5px;color:var(--muted);margin-top:2px;white-space:normal}
+.li .amt{text-align:right;flex:0 0 auto;font-variant-numeric:tabular-nums}
+.li .amt .v{font-weight:650;font-size:15px}
+.li .amt .u{font-size:11.5px;color:var(--muted)}
+.li .chev{color:var(--muted);flex:0 0 auto;opacity:.6}
+.li .chev svg{width:18px;height:18px;display:block}
+
+/* campos */
+.field{margin-bottom:14px}
+.field>label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.inp{
+  width:100%;min-width:0;min-height:48px;padding:10px 12px;border:1px solid var(--line);
+  border-radius:var(--r-sm);background:var(--card);
+}
+.inp:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+textarea.inp{min-height:64px;resize:vertical}
+.hint{font-size:12px;color:var(--muted);margin-top:5px}
+.delb{width:40px;height:40px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);
+  background:var(--card);color:var(--danger);display:grid;place-items:center;cursor:pointer}
+.delb svg{width:17px;height:17px}
+
+/* avisos */
+.note{display:flex;gap:11px;padding:13px 14px;border-radius:var(--r);margin-bottom:14px;font-size:13.5px;line-height:1.4}
+.note.w{background:var(--warn-soft);color:var(--warn)}
+.note.d{background:var(--danger-soft);color:var(--danger)}
+.note.i{background:var(--accent-soft);color:var(--accent)}
+.note svg{width:19px;height:19px;flex:0 0 auto;margin-top:1px}
+.note b{font-weight:700}
+
+/* totales */
+.tot{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line2)}
+.tot>div{background:var(--card);padding:12px 14px}
+.tot .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tot .v{font-weight:700;font-size:20px;margin-top:3px;font-variant-numeric:tabular-nums}
+.fila{display:flex;justify-content:space-between;gap:12px;padding:11px 14px;border-top:1px solid var(--line2);font-size:14.5px}
+.fila .k{color:var(--muted);flex:0 0 auto}
+.fila .v{text-align:right;font-weight:600;min-width:0}
+
+/* selector de año */
+.anio{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.anio .v{flex:1;text-align:center;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.stepb{
+  width:52px;height:46px;flex:0 0 auto;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);display:grid;place-items:center;cursor:pointer;font-size:22px;font-weight:600;line-height:1;
+}
+.stepb:active{background:var(--accent-soft);border-color:var(--accent)}
+
+/* calendario */
+.leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.leyenda i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px}
+.mes{padding:10px 10px 12px}
+.mes h3{font-size:15px;margin:2px 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.mes h3 span{text-transform:capitalize}
+.mes h3 small{font-weight:400;color:var(--muted);font-size:12px}
+.sem{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dow{font-size:11px;color:var(--muted);text-align:center;padding:2px 0}
+.day{aspect-ratio:1;border:0;border-radius:9px;background:transparent;font-size:15px;cursor:pointer;padding:0;
+  font-variant-numeric:tabular-nums;min-height:40px}
+.day:active{background:var(--line2)}
+.day.fest{color:var(--danger);background:var(--danger-soft);font-weight:650}
+.day.vac{background:var(--accent);color:var(--accent-ink);font-weight:650}
+.day.vac.fest{background:repeating-linear-gradient(45deg,var(--accent),var(--accent) 5px,var(--danger) 5px,var(--danger) 8px);color:#fff}
+.day.sel{outline:3px solid var(--sel);outline-offset:-3px}
+.day.hoy{box-shadow:inset 0 0 0 1.5px var(--text)}
+.wk{display:flex;gap:6px;flex-wrap:wrap}
+.wk label{display:flex;align-items:center;gap:6px;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-height:42px}
+
+/* tabla del resumen en pantalla */
+.tw{overflow-x:auto}
+table.res{border-collapse:collapse;width:100%;font-size:14px}
+table.res th,table.res td{padding:9px 10px;border-top:1px solid var(--line2);text-align:left;white-space:nowrap}
+table.res thead th{border-top:0;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+table.res .n{text-align:right;font-variant-numeric:tabular-nums}
+table.res tfoot td{font-weight:700;background:var(--card2)}
+
+/* navegación inferior */
+nav.bot{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+  background:var(--card);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+body.sinnav nav.bot{display:none}
+nav.bot a{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:9px 2px 7px;font-size:11px;color:var(--muted);font-weight:600;
+}
+nav.bot a svg{width:23px;height:23px}
+nav.bot a[aria-current="page"]{color:var(--accent)}
+
+/* barra guardar */
+.savebar{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);
+  border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+}
+.savebar .t{flex:1;min-width:0}
+.savebar .t .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.savebar .t .v{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+.savebar .btn{flex:0 0 auto;min-width:120px}
+
+.empty{text-align:center;padding:38px 20px;color:var(--muted)}
+.empty svg{width:42px;height:42px;opacity:.35;margin-bottom:10px}
+.empty p{margin:0 0 4px}
+
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));
+  background:#12181d;color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;
+  z-index:60;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:90vw;text-align:center;
+}
+:root[data-theme="dark"] .toast{background:#e8edf2;color:#12181d}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .toast{background:#e8edf2;color:#12181d}}
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="app"></main>
+<nav class="bot" id="nav"></nav>
+<div id="savebar"></div>
+<script src="./vendor/jspdf.umd.min.js"></script>
+<script src="./vendor/jspdf.plugin.autotable.min.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   CONTROL DE VACACIONES — datos locales en el móvil
+   Trabajador -> periodos de vacaciones (un día suelto o un
+   grupo de días). Cada día del año es laborable o festivo.
+   Un grupo puede incluir festivos: se cuentan los laborables
+   (sin festivos) y los naturales (todos los días).
+   ========================================================= */
+
+const VERSION='1';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
+/* OJO: esta app comparte dominio con el Diario de trabajos y con Control de horas
+   (jorditgn.github.io), y por tanto comparte IndexedDB y localStorage. Estos
+   nombres NO pueden coincidir con los de las otras. */
+const APP='control-vacaciones';
+const DBN='control-vacaciones', STORE='kv', KEY='datos', LSKEY='vacaciones-copia-seguridad';
+let D=null;            /* todos los datos, en memoria */
+let borrador=null;     /* periodo que se está eligiendo en el calendario */
+let anio=new Date().getFullYear();
+let vista='inicio';
+let toastT=null;
+
+function estadoNuevo(){
+  return {
+    v:1, app:APP,
+    ajustes:{ tema:'auto', trabajadorId:null,
+              noLaborables:[0,6],                       /* días de la semana no laborables; 0 = domingo */
+              empresa:{ nombre:'', cif:'', localidad:'' } },
+    trabajadores:[], festivos:[], periodos:[],
+    meta:{ ultimaCopia:null, creado:new Date().toISOString() }
+  };
+}
+
+/* ---------- IndexedDB (un único documento JSON) ---------- */
+function idb(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DBN,1);
+    r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE); };
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function idbGet(k){
+  const db=await idb();
+  return new Promise((res,rej)=>{
+    const q=db.transaction(STORE,'readonly').objectStore(STORE).get(k);
+    q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error);
+  });
+}
+async function idbPut(k,v){
+  const db=await idb();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(v,k);
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);
+  });
+}
+
+function migrar(d){
+  const n=estadoNuevo();
+  d.app=APP;
+  d.ajustes=Object.assign(n.ajustes, d.ajustes||{});
+  d.ajustes.empresa=Object.assign({nombre:'',cif:'',localidad:''}, d.ajustes.empresa||{});
+  if(!Array.isArray(d.ajustes.noLaborables)) d.ajustes.noLaborables=[0,6];
+  d.meta=Object.assign({ultimaCopia:null,creado:null}, d.meta||{});
+  ['trabajadores','festivos','periodos'].forEach(k=>{ if(!Array.isArray(d[k])) d[k]=[]; });
+  d.periodos.forEach(p=>{ if(typeof p.notas!=='string') p.notas=''; });
+  return d;
+}
+async function cargar(){
+  let d=null;
+  try{ d=await idbGet(KEY); }catch(e){ console.warn('IndexedDB no disponible',e); }
+  if(!d){ try{ const ls=localStorage.getItem(LSKEY); if(ls){ d=JSON.parse(ls); console.warn('Recuperado de la copia local'); } }catch(e){} }
+  D = (d && d.v) ? migrar(d) : estadoNuevo();
+  mapaFest=null;
+}
+let cola=Promise.resolve();
+function guardar(){
+  mapaFest=null;
+  cola=cola.then(()=>idbPut(KEY,D)).catch(e=>{ console.error(e); toast('No se pudo guardar'); });
+  try{ localStorage.setItem(LSKEY, JSON.stringify(D)); }catch(e){}
+  return cola;
+}
+
+/* ---------- utilidades ---------- */
+const uid=()=> (crypto.randomUUID ? crypto.randomUUID()
+                : 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+const MESC =['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MESL =['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAC =['dom','lun','mar','mié','jue','vie','sáb'];
+const DIAL =['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const z2=n=>String(n).padStart(2,'0');
+/* Las fechas son siempre texto 'AAAA-MM-DD'; las cuentas de días se hacen en UTC
+   para que el cambio de hora no meta ni quite un día. */
+const iso=(y,m,d)=>y+'-'+z2(m+1)+'-'+z2(d);
+function fechaUTC(s){ const p=s.split('-'); return new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); }
+function masDias(s,n){ const d=fechaUTC(s); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+const diaSem=s=>fechaUTC(s).getUTCDay();
+function hoyISO(){ const d=new Date(); return iso(d.getFullYear(),d.getMonth(),d.getDate()); }
+function fFecha(s){ if(!s) return '—'; const p=s.split('-'); return (+p[2])+' '+MESC[+p[1]-1]+' '+p[0]; }
+function fFechaDia(s){ return s ? DIAC[diaSem(s)]+' '+fFecha(s) : '—'; }               /* lun 3 ago 2026 */
+function fFechaLarga(s){ if(!s) return ''; const p=s.split('-'); return (+p[2])+' de '+MESL[+p[1]-1]+' de '+p[0]; }
+function fNum(s){ const p=s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }                /* 03/08/2026 */
+function diasDesde(s){ if(!s) return Infinity; const t=new Date(s).getTime(); if(!isFinite(t)) return Infinity; return Math.floor((Date.now()-t)/86400000); }
+
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pl=(n,uno,varios)=>n+' '+(n===1?uno:varios);
+
+function toast(msg){
+  const old=document.querySelector('.toast'); if(old) old.remove();
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),3000);
+}
+function ir(h){ location.hash=h; }
+function volver(){ if(history.length>1) history.back(); else ir('#/'); }
+
+/* ---------- iconos ---------- */
+const sv=d=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>';
+const I={
+  mas:   sv('<path d="M12 5v14M5 12h14"/>'),
+  chev:  sv('<path d="M9 18l6-6-6-6"/>'),
+  atras: sv('<path d="M19 12H5M12 19l-7-7 7-7"/>'),
+  casa:  sv('<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'),
+  cal:   sv('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+  hoja:  sv('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>'),
+  rueda: sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 7L4.6 7a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 3V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
+  papel: sv('<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>'),
+  aviso: sv('<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'),
+  info:  sv('<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/>'),
+  pdf:   sv('<path d="M12 3v12M8 11l4 4 4-4M4 19h16"/>'),
+  comp:  sv('<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M12 15V3M8 7l4-4 4 4"/>'),
+  ok:    sv('<path d="M20 6L9 17l-5-5"/>'),
+  lapiz: sv('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
+  user:  sv('<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>')
+};
+
+/* =========================================================
+   MODELO: festivos, cuentas de días y periodos
+   ========================================================= */
+let mapaFest=null;     /* fecha -> nombre; se rehace cada vez que se guarda */
+function festivos(){
+  if(!mapaFest){ mapaFest={}; D.festivos.forEach(f=>{ mapaFest[f.fecha]=f.nombre||''; }); }
+  return mapaFest;
+}
+const esFestivoMarcado = s => s in festivos();
+/* No laborable = festivo marcado, o día de la semana que no se trabaja */
+const esFestivo = s => esFestivoMarcado(s) || D.ajustes.noLaborables.indexOf(diaSem(s))>=0;
+
+/* Cuenta entre dos fechas, ambas incluidas:
+   nat = días naturales (todos, festivos incluidos); lab = sólo laborables. */
+function cuenta(desde,hasta){
+  const r={nat:0, lab:0, fest:[]};
+  for(let d=desde; d<=hasta; d=masDias(d,1)){
+    r.nat++;
+    if(esFestivo(d)) r.fest.push(d); else r.lab++;
+  }
+  return r;
+}
+function reincorporacion(hasta){ let d=masDias(hasta,1), n=0; while(esFestivo(d) && n++<400) d=masDias(d,1); return d; }
+
+const getTrab = id => D.trabajadores.find(t=>t.id===id);
+const getPer  = id => D.periodos.find(p=>p.id===id);
+const nomTrab = id => { const t=getTrab(id); return t?t.nombre:'(trabajador borrado)'; };
+function trabActual(){ return getTrab(D.ajustes.trabajadorId) || D.trabajadores[0] || null; }
+const persDe = tid => D.periodos.filter(p=>p.trabajadorId===tid).sort((a,b)=>a.desde.localeCompare(b.desde));
+const periodoEn = (tid,s) => D.periodos.find(p=>p.trabajadorId===tid && p.desde<=s && s<=p.hasta);
+const suelto = p => p.desde===p.hasta;
+const fPeriodo = p => suelto(p) ? fFechaDia(p.desde) : 'Del '+fFecha(p.desde)+' al '+fFecha(p.hasta);
+const txtCuenta = c => pl(c.lab,'laborable','laborables')+' · '+pl(c.nat,'natural','naturales');
+
+/* Un grupo puede empezar un año y acabar al siguiente: a cada año se le
+   cuentan sólo sus días. */
+function recorte(p,y){
+  const a = p.desde < y+'-01-01' ? y+'-01-01' : p.desde;
+  const b = p.hasta > y+'-12-31' ? y+'-12-31' : p.hasta;
+  return a<=b ? {desde:a, hasta:b} : null;
+}
+function resumenAnual(tid,y){
+  const r={filas:[], nat:0, lab:0};
+  persDe(tid).forEach(p=>{
+    const c=recorte(p,y); if(!c) return;
+    const n=cuenta(c.desde,c.hasta);
+    r.nat+=n.nat; r.lab+=n.lab;
+    r.filas.push({p:p, desde:c.desde, hasta:c.hasta, nat:n.nat, lab:n.lab, parcial:c.desde!==p.desde||c.hasta!==p.hasta});
+  });
+  const t=getTrab(tid);
+  r.dias = t ? (Number(t.dias)||0) : 0;
+  r.pend = r.dias - r.lab;
+  return r;
+}
+
+/* Festivos nacionales de España (los autonómicos y locales se añaden a mano) */
+function pascua(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
+    g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,
+    m=Math.floor((a+11*h+22*l)/451),mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;
+  return iso(y,mes-1,dia);
+}
+function nacionales(y){
+  return [
+    [y+'-01-01','Año Nuevo'],[y+'-01-06','Epifanía del Señor'],
+    [masDias(pascua(y),-2),'Viernes Santo'],[y+'-05-01','Fiesta del Trabajo'],
+    [y+'-08-15','Asunción de la Virgen'],[y+'-10-12','Fiesta Nacional de España'],
+    [y+'-11-01','Todos los Santos'],[y+'-12-06','Día de la Constitución'],
+    [y+'-12-08','Inmaculada Concepción'],[y+'-12-25','Natividad del Señor']
+  ];
+}
+
+/* =========================================================
+   ROUTER
+   ========================================================= */
+const NAV=[
+  {h:'#/',           k:'inicio',     t:'Inicio',     i:'casa'},
+  {h:'#/calendario', k:'calendario', t:'Calendario', i:'cal'},
+  {h:'#/informes',   k:'informes',   t:'Informes',   i:'hoja'},
+  {h:'#/ajustes',    k:'ajustes',    t:'Ajustes',    i:'rueda'}
+];
+const VISTAS={};
+let ultimoHash=null;
+
+function render(){
+  const trozos=location.hash.replace(/^#\/?/,'').split('/').filter(s=>s!=='');
+  const v=trozos[0]||'inicio';
+  const fn=VISTAS[v];
+  if(!fn){ ir('#/'); return; }
+  /* al salir del calendario de selección se suelta el borrador */
+  if(v!=='nuevo') borrador=null;
+  vista=v;
+  let R;
+  try{ R=fn(trozos.slice(1)); }
+  catch(e){ console.error(e); R={titulo:'Algo ha ido mal', html:'<div class="note d">'+I.aviso+'<div>'+esc(e.message)+'</div></div>', nav:'inicio'}; }
+  if(!R) return;   /* la vista ha redirigido */
+
+  let th='';
+  if(R.atras) th+='<button class="iconbtn" data-act="atras" aria-label="Atrás">'+I.atras+'</button>';
+  th+='<div class="ttl">'+esc(R.titulo)+(R.sub?'<div class="sub">'+esc(R.sub)+'</div>':'')+'</div>';
+  document.getElementById('top').innerHTML=th;
+  document.getElementById('app').innerHTML=R.html||'';
+  document.getElementById('savebar').innerHTML=R.savebar||'';
+  document.body.classList.toggle('sinnav', R.nav===false);
+  document.getElementById('nav').innerHTML = R.nav===false ? '' :
+    NAV.map(n=>'<a href="'+n.h+'"'+(n.k===R.nav?' aria-current="page"':'')+'>'+I[n.i]+'<span>'+n.t+'</span></a>').join('');
+
+  if(location.hash!==ultimoHash){
+    ultimoHash=location.hash;
+    /* los calendarios se abren por el mes en curso (o por el del periodo elegido) */
+    const m = R.mes!=null ? document.getElementById('mes-'+R.mes) : null;
+    if(m) m.scrollIntoView({block:'center'}); else window.scrollTo(0,0);
+  }
+}
+
+/* delegación de eventos */
+const ACT={}, IN={};
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]'); if(!el) return;
+  const f=ACT[el.dataset.act]; if(!f) return;
+  e.preventDefault(); f(el,e);
+});
+document.addEventListener('input',e=>{
+  const el=e.target.closest('[data-in]'); if(!el) return;
+  const f=IN[el.dataset.in]; if(f) f(el,e);
+});
+document.addEventListener('change',e=>{
+  const el=e.target.closest('[data-ch]'); if(!el) return;
+  const f=IN[el.dataset.ch]; if(f) f(el,e);
+});
+ACT['ir']=el=>ir(el.dataset.h);
+ACT['atras']=()=>volver();
+ACT['anio']=el=>{ anio+= +el.dataset.d; render(); };
+IN['trabsel']=el=>{ D.ajustes.trabajadorId=el.value; guardar(); render(); };
+
+/* ---------- piezas comunes ---------- */
+function selAnio(){
+  return '<div class="anio"><button class="stepb" data-act="anio" data-d="-1" aria-label="Año anterior">‹</button>'+
+         '<div class="v" id="anio-v">'+anio+'</div>'+
+         '<button class="stepb" data-act="anio" data-d="1" aria-label="Año siguiente">›</button></div>';
+}
+function selTrab(){
+  const t=trabActual();
+  if(D.trabajadores.length<2) return '';
+  return '<div class="field"><label for="trabsel">Trabajador</label><select class="inp" id="trabsel" data-ch="trabsel">'+
+    D.trabajadores.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,'es')).map(x=>
+      '<option value="'+x.id+'"'+(x.id===t.id?' selected':'')+'>'+esc(x.nombre)+'</option>').join('')+'</select></div>';
+}
+function mesInicial(){ return anio===new Date().getFullYear() ? new Date().getMonth() : 0; }
+const LEYENDA='<div class="leyenda"><span><i style="background:var(--accent)"></i>Vacaciones</span>'+
+  '<span><i style="background:var(--danger-soft);border:1px solid var(--danger)"></i>Festivo o no laborable</span></div>';
+
+/* Calendario del año. tid: trabajador cuyas vacaciones se pintan (o null);
+   sel: {desde,hasta} selección en curso; sinId: periodo que no se pinta (el que se está cambiando). */
+function calendario(tid, sel, sinId){
+  const hoy=hoyISO();
+  const pers = tid ? D.periodos.filter(p=>p.trabajadorId===tid && p.id!==sinId) : [];
+  const enVac = s => pers.some(p=>p.desde<=s && s<=p.hasta);
+  let h='';
+  for(let m=0;m<12;m++){
+    const dias=new Date(Date.UTC(anio,m+1,0)).getUTCDate();
+    const hueco=(new Date(Date.UTC(anio,m,1)).getUTCDay()+6)%7;   /* la semana empieza en lunes */
+    let c=['L','M','X','J','V','S','D'].map(d=>'<div class="dow">'+d+'</div>').join('');
+    for(let k=0;k<hueco;k++) c+='<div></div>';
+    let vl=0;
+    for(let d=1;d<=dias;d++){
+      const s=iso(anio,m,d), fe=esFestivo(s), va=enVac(s);
+      if(va && !fe) vl++;
+      const cl='day'+(fe?' fest':'')+(va?' vac':'')+(sel && sel.desde && sel.desde<=s && s<=sel.hasta?' sel':'')+(s===hoy?' hoy':'');
+      const nom=festivos()[s];
+      c+='<button class="'+cl+'" data-act="dia" data-d="'+s+'"'+(nom?' title="'+esc(nom)+'"':'')+'>'+d+'</button>';
+    }
+    h+='<div class="card mes" id="mes-'+m+'"><h3><span>'+MESL[m]+'</span>'+
+       (vl?'<small>'+pl(vl,'laborable','laborables')+' de vacaciones</small>':'')+'</h3><div class="sem">'+c+'</div></div>';
+  }
+  return h;
+}
+/* Si en el año no hay ningún festivo marcado, todos los días entre semana
+   contarían como laborables: se avisa en vez de callar. */
+function avisoSinFestivos(){
+  if(D.festivos.some(f=>f.fecha.slice(0,4)===String(anio))) return '';
+  return '<div class="note w">'+I.aviso+'<div><b>'+anio+' no tiene festivos marcados.</b> Sin ellos, los festivos entre semana se cuentan como laborables. <a href="#/festivos">Marcarlos</a></div></div>';
+}
+function sinTrabajadores(){
+  return '<div class="empty">'+I.user+'<p>Todavía no hay ningún trabajador.</p>'+
+         '<p class="small">Crea el primero para empezar a apuntar sus vacaciones.</p></div>'+
+         '<button class="btn primary big block" data-act="ir" data-h="#/trabajador/nuevo">'+I.mas+' Nuevo trabajador</button>';
+}
+
+/* =========================================================
+   INICIO
+   ========================================================= */
+VISTAS['inicio']=function(){
+  const t=trabActual();
+  if(!t) return {titulo:'Control de vacaciones', html:sinTrabajadores(), nav:'inicio'};
+  const r=resumenAnual(t.id,anio);
+  const dias=diasDesde(D.meta.ultimaCopia);
+  let h='';
+  if(D.periodos.length>=3 && dias>14){
+    h+='<div class="note w">'+I.aviso+'<div><b>Haz una copia de seguridad.</b> '+
+       (D.meta.ultimaCopia?'La última fue hace '+dias+' días.':'Todavía no has hecho ninguna.')+
+       ' Los datos están sólo en este móvil. <a href="#/ajustes">Hacerla ahora</a></div></div>';
+  }
+  h+=selTrab()+selAnio();
+  h+='<button class="btn primary big block" data-act="nuevo-per">'+I.mas+' Apuntar vacaciones</button>';
+
+  h+='<div class="card mt"><div class="tot">'+
+     '<div><div class="k">Laborables de vacaciones</div><div class="v" id="tot-lab">'+r.lab+'</div></div>'+
+     '<div><div class="k">Naturales (con festivos)</div><div class="v" id="tot-nat">'+r.nat+'</div></div>'+
+     '<div><div class="k">Días laborables al año</div><div class="v">'+r.dias+'</div></div>'+
+     '<div><div class="k">Laborables pendientes</div><div class="v" id="tot-pend"'+(r.pend<0?' style="color:var(--danger)"':'')+'>'+r.pend+'</div></div>'+
+     '</div></div>';
+
+  h+='<div class="card"><div class="card-h">Vacaciones de '+anio+'</div>';
+  if(!r.filas.length){
+    h+='<div class="empty">'+I.cal+'<p>No hay vacaciones apuntadas en '+anio+'.</p><p class="small">Pulsa <b>Apuntar vacaciones</b> y elige los días en el calendario.</p></div>';
+  }else{
+    h+='<div class="lst">';
+    r.filas.slice().reverse().forEach(f=>{
+      h+='<button class="li" data-act="ir" data-h="#/periodo/'+f.p.id+'">'+
+         '<div class="gro"><div class="t">'+esc(fPeriodo(f.p))+'</div><div class="s">'+
+         pl(f.nat,'día natural','días naturales')+(f.parcial?' en '+anio:'')+(f.p.notas?' — '+esc(f.p.notas):'')+'</div></div>'+
+         '<div class="amt"><div class="v">'+f.lab+'</div><div class="u">laborables</div></div><div class="chev">'+I.chev+'</div></button>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  return {titulo:'Control de vacaciones', sub:t.nombre+' · '+pl(persDe(t.id).length,'apunte','apuntes'), html:h, nav:'inicio'};
+};
+ACT['nuevo-per']=()=>{ borrador=null; ir('#/nuevo'); };
+
+/* =========================================================
+   CALENDARIO: vacaciones y festivos del año, de un vistazo
+   ========================================================= */
+VISTAS['calendario']=function(){
+  const t=trabActual();
+  if(!t) return {titulo:'Calendario', html:sinTrabajadores(), nav:'calendario'};
+  const h=selTrab()+selAnio()+avisoSinFestivos()+LEYENDA+
+    '<div class="small muted mb">Toca un día libre para apuntar vacaciones; toca un día de vacaciones para ver su periodo.</div>'+
+    calendario(t.id,null,null)+
+    '<button class="btn block" data-act="ir" data-h="#/festivos">'+I.cal+' Festivos y días no laborables</button>';
+  return {titulo:'Calendario '+anio, sub:t.nombre, html:h, nav:'calendario', mes:mesInicial()};
+};
+
+/* =========================================================
+   APUNTAR VACACIONES: se eligen los días en el calendario
+   ========================================================= */
+VISTAS['nuevo']=function(){
+  const t0=trabActual(); if(!t0){ ir('#/'); return null; }
+  if(!borrador) borrador={ id:null, trabajadorId:t0.id, desde:null, hasta:null, etapa:0, notas:'' };
+  const b=borrador, t=getTrab(b.trabajadorId)||t0;
+  const h=selAnio()+avisoSinFestivos()+LEYENDA+
+    '<div class="note i">'+I.info+'<div>Toca un día para apuntarlo como <b>día suelto</b>. Toca después otro día para formar un <b>grupo</b>: puede incluir festivos, pero sólo se cuentan los laborables.</div></div>'+
+    calendario(t.id,b,b.id)+
+    '<div class="card pad"><div class="field" style="margin:0"><label for="f-notas">Observaciones (opcional)</label>'+
+    '<textarea class="inp" id="f-notas" data-in="notas" placeholder="Por ejemplo: vacaciones de verano">'+esc(b.notas)+'</textarea></div></div>';
+  const sb='<div class="savebar"><div class="t"><div class="k" id="sel-txt">'+esc(txtSel())+'</div>'+
+    '<div class="v" id="sel-tot">'+esc(totSel())+'</div></div>'+
+    '<button class="btn primary" data-act="guardar-per">'+I.ok+' Guardar</button></div>';
+  const mes = b.desde && +b.desde.slice(0,4)===anio ? +b.desde.slice(5,7)-1 : mesInicial();
+  return {titulo: b.id?'Cambiar fechas':'Apuntar vacaciones', sub:t.nombre, atras:true, html:h, nav:false, savebar:sb, mes:mes};
+};
+function txtSel(){
+  const b=borrador;
+  if(!b || !b.desde) return 'Elige un día';
+  return b.desde===b.hasta ? 'Día suelto: '+fFechaDia(b.desde) : 'Del '+fFecha(b.desde)+' al '+fFecha(b.hasta);
+}
+function totSel(){
+  const b=borrador;
+  if(!b || !b.desde) return '—';
+  const c=cuenta(b.desde,b.hasta);
+  return c.lab+' lab. · '+c.nat+' nat.';
+}
+/* OJO: aquí NO se llama a render(): se perdería lo escrito en Observaciones y el
+   sitio del calendario. Sólo se retocan los días marcados y la barra de abajo. */
+function refrescaSel(){
+  const b=borrador;
+  document.querySelectorAll('#app .day').forEach(el=>{
+    const s=el.dataset.d;
+    el.classList.toggle('sel', !!(b.desde && b.desde<=s && s<=b.hasta));
+  });
+  const a=document.getElementById('sel-txt'), c=document.getElementById('sel-tot');
+  if(a) a.textContent=txtSel();
+  if(c) c.textContent=totSel();
+}
+IN['notas']=el=>{ if(borrador) borrador.notas=el.value; };
+
+ACT['dia']=async el=>{
+  const s=el.dataset.d;
+  if(vista==='festivos'){
+    const i=D.festivos.findIndex(f=>f.fecha===s);
+    if(i>=0) D.festivos.splice(i,1); else D.festivos.push({fecha:s, nombre:''});
+    await guardar(); render(); return;
+  }
+  if(vista==='calendario'){
+    const t=trabActual(); if(!t) return;
+    const p=periodoEn(t.id,s);
+    if(p){ ir('#/periodo/'+p.id); return; }
+    borrador={ id:null, trabajadorId:t.id, desde:s, hasta:s, etapa:1, notas:'' };
+    ir('#/nuevo'); return;
+  }
+  if(vista==='nuevo' && borrador){
+    const b=borrador;
+    if(b.etapa===1 && s!==b.desde){            /* segundo toque: se forma el grupo */
+      if(s<b.desde){ b.hasta=b.desde; b.desde=s; } else b.hasta=s;
+      b.etapa=2;
+    }else{                                     /* primer toque, o se vuelve a empezar */
+      b.desde=s; b.hasta=s; b.etapa=1;
+    }
+    refrescaSel();
+  }
+};
+ACT['guardar-per']=async()=>{
+  const b=borrador; if(!b) return;
+  if(!b.desde){ toast('Toca un día en el calendario'); return; }
+  const c=cuenta(b.desde,b.hasta);
+  if(c.lab===0){ toast('Esos días no tienen ningún laborable'); return; }
+  const choca=D.periodos.find(p=>p.trabajadorId===b.trabajadorId && p.id!==b.id && p.desde<=b.hasta && b.desde<=p.hasta);
+  if(choca){ toast('Se pisa con otro apunte: '+fPeriodo(choca)); return; }
+  let p;
+  if(b.id){ p=getPer(b.id); if(!p) return; p.desde=b.desde; p.hasta=b.hasta; p.notas=(b.notas||'').trim(); }
+  else{
+    p={ id:uid(), trabajadorId:b.trabajadorId, desde:b.desde, hasta:b.hasta, notas:(b.notas||'').trim(), creado:new Date().toISOString() };
+    D.periodos.push(p);
+  }
+  anio=+p.desde.slice(0,4);
+  await guardar();
+  borrador=null;
+  toast('Vacaciones apuntadas: '+txtCuenta(c));
+  location.replace('#/periodo/'+p.id);
+};
+
+/* =========================================================
+   FICHA DE UN PERIODO: cuentas y justificante
+   ========================================================= */
+VISTAS['periodo']=function(p0){
+  const p=getPer(p0[0]); if(!p){ ir('#/'); return null; }
+  const c=cuenta(p.desde,p.hasta);
+  let h='<div class="card"><div class="card-h">'+(suelto(p)?'Día suelto':'Grupo de días')+'</div>'+
+    '<div style="padding:14px;font-weight:650;font-size:17px">'+esc(suelto(p)?fFechaLarga(p.desde):'Del '+fFechaLarga(p.desde)+' al '+fFechaLarga(p.hasta))+'</div>'+
+    '<div class="tot" style="border-top:1px solid var(--line2)">'+
+    '<div><div class="k">Laborables</div><div class="v" id="per-lab">'+c.lab+'</div></div>'+
+    '<div><div class="k">Naturales (con festivos)</div><div class="v" id="per-nat">'+c.nat+'</div></div></div>'+
+    '<div class="fila"><span class="k">Trabajador</span><span class="v">'+esc(nomTrab(p.trabajadorId))+'</span></div>'+
+    '<div class="fila"><span class="k">Vuelve al trabajo</span><span class="v">'+esc(fFechaDia(reincorporacion(p.hasta)))+'</span></div>'+
+    (c.fest.length?'<div class="fila"><span class="k">No laborables dentro</span><span class="v">'+c.fest.length+'</span></div>':'')+
+    (p.notas?'<div class="fila"><span class="k">Observaciones</span><span class="v">'+esc(p.notas)+'</span></div>':'')+
+    '</div>';
+  if(c.fest.length){
+    h+='<div class="small muted mb" style="padding:0 2px">No cuentan como vacaciones: '+
+       c.fest.map(d=>fNum(d).slice(0,5)+(festivos()[d]?' ('+esc(festivos()[d])+')':'')).join(', ')+'.</div>';
+  }
+  h+='<div class="card"><div class="card-h">Justificante para firmar</div><div style="padding:14px">'+
+     '<div class="small muted mb">Un PDF con el periodo, los días laborables y naturales, y sitio para la firma del trabajador y de la empresa.</div>'+
+     '<div class="btnrow"><button class="btn primary" data-act="pdf-just" data-id="'+p.id+'" data-modo="descargar">'+I.pdf+' PDF</button>'+
+     '<button class="btn" data-act="pdf-just" data-id="'+p.id+'" data-modo="compartir">'+I.comp+' Compartir</button></div></div></div>'+
+     '<div class="btnrow"><button class="btn" data-act="cambiar-per" data-id="'+p.id+'">'+I.lapiz+' Cambiar fechas</button>'+
+     '<button class="btn danger fill" data-act="borrar-per" data-id="'+p.id+'">'+I.papel+' Eliminar</button></div>';
+  return {titulo:'Vacaciones', sub:nomTrab(p.trabajadorId), atras:true, html:h, nav:'inicio'};
+};
+ACT['cambiar-per']=el=>{
+  const p=getPer(el.dataset.id); if(!p) return;
+  borrador={ id:p.id, trabajadorId:p.trabajadorId, desde:p.desde, hasta:p.hasta, etapa:2, notas:p.notas||'' };
+  anio=+p.desde.slice(0,4);
+  ir('#/nuevo');
+};
+ACT['borrar-per']=async el=>{
+  const p=getPer(el.dataset.id); if(!p) return;
+  if(!confirm('¿Eliminar este apunte de vacaciones?\n\n'+fPeriodo(p))) return;
+  D.periodos=D.periodos.filter(x=>x.id!==p.id);
+  await guardar(); toast('Apunte eliminado'); ir('#/');
+};
+
+/* =========================================================
+   FESTIVOS Y DÍAS NO LABORABLES
+   ========================================================= */
+VISTAS['festivos']=function(){
+  const lista=D.festivos.filter(f=>f.fecha.slice(0,4)===String(anio)).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  let h=selAnio()+
+    '<div class="card"><div class="card-h">Días de la semana que no se trabajan</div><div style="padding:14px">'+
+    '<div class="wk">'+[1,2,3,4,5,6,0].map(d=>'<label><input type="checkbox" data-ch="nolab" value="'+d+'"'+
+      (D.ajustes.noLaborables.indexOf(d)>=0?' checked':'')+'>'+DIAL[d]+'</label>').join('')+'</div></div></div>'+
+    '<div class="note i">'+I.info+'<div>Toca un día para marcarlo como <b>festivo</b>; vuelve a tocarlo para dejarlo laborable. El calendario laboral es el mismo para todos los trabajadores.</div></div>'+
+    '<button class="btn block mb" data-act="nacionales">'+I.mas+' Añadir los festivos nacionales de '+anio+'</button>'+
+    calendario(null,null,null);
+  h+='<div class="card"><div class="card-h">Festivos de '+anio+' ('+lista.length+')</div>';
+  if(!lista.length) h+='<div class="empty" style="padding:22px">'+I.cal+'<p class="small">Aún no hay festivos marcados en '+anio+'.</p></div>';
+  else{
+    h+='<div class="lst">';
+    lista.forEach(f=>{
+      h+='<div class="li" style="cursor:default"><div class="gro"><div class="s" style="margin:0 0 5px">'+esc(fFechaDia(f.fecha))+'</div>'+
+         '<input class="inp" data-ch="festnom" data-f="'+f.fecha+'" value="'+esc(f.nombre)+'" placeholder="Nombre del festivo (opcional)" maxlength="60" aria-label="Nombre del festivo del '+fNum(f.fecha)+'"></div>'+
+         '<button class="delb" data-act="quitar-fest" data-f="'+f.fecha+'" aria-label="Quitar festivo">'+I.papel+'</button></div>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  return {titulo:'Festivos '+anio, sub:'Calendario laboral', atras:true, html:h, nav:'calendario', mes:mesInicial()};
+};
+IN['nolab']=el=>{
+  const d=+el.value, a=D.ajustes.noLaborables.filter(x=>x!==d);
+  if(el.checked) a.push(d);
+  D.ajustes.noLaborables=a; guardar(); render();
+};
+IN['festnom']=el=>{ const f=D.festivos.find(x=>x.fecha===el.dataset.f); if(f){ f.nombre=el.value.trim(); guardar(); } };
+ACT['quitar-fest']=async el=>{ D.festivos=D.festivos.filter(f=>f.fecha!==el.dataset.f); await guardar(); render(); };
+ACT['nacionales']=async()=>{
+  let n=0;
+  nacionales(anio).forEach(x=>{ if(!D.festivos.some(f=>f.fecha===x[0])){ D.festivos.push({fecha:x[0], nombre:x[1]}); n++; } });
+  await guardar(); render();
+  toast(n? pl(n,'festivo añadido','festivos añadidos')+'. Faltan los autonómicos y locales' : 'Ya estaban todos');
+};
+
+/* =========================================================
+   PDF — justificante de un periodo y resumen anual
+   ========================================================= */
+const TINTA=[109,40,217];
+const EST={
+  theme:'grid',
+  styles:{font:'helvetica',fontSize:10,cellPadding:2.4,lineColor:[221,225,229],lineWidth:.2,textColor:[22,26,30],overflow:'linebreak'},
+  headStyles:{fillColor:TINTA,textColor:255,fontStyle:'bold'},
+  footStyles:{fillColor:[237,233,254],textColor:[22,26,30],fontStyle:'bold'},
+  margin:{left:14,right:14}
+};
+function tabla(ctx,cfg){
+  ctx.doc.autoTable(Object.assign({},EST,cfg,{startY:ctx.y}));
+  ctx.y=ctx.doc.lastAutoTable.finalY+8;
+}
+function parrafo(ctx,texto,tam,gris){
+  const doc=ctx.doc; tam=tam||10.5;
+  doc.setFont('helvetica','normal'); doc.setFontSize(tam); doc.setTextColor(gris?95:22);
+  const ls=doc.splitTextToSize(texto, ctx.W-28);
+  if(ctx.y+ls.length*tam*.45>275){ doc.addPage(); ctx.y=20; }
+  doc.text(ls,14,ctx.y);
+  ctx.y+=ls.length*tam*.45+5;
+  doc.setTextColor(0);
+}
+function cabecera(doc,W,sobre,titulo){
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(110);
+  doc.text(sobre,14,12);
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(22,26,30);
+  const tit=doc.splitTextToSize(titulo, W-28);
+  doc.text(tit,14,19);
+  const y=19+(tit.length-1)*6.4+5;
+  doc.setDrawColor(205); doc.setLineWidth(.3); doc.line(14,y,W-14,y);
+  doc.setTextColor(0);
+  return y+8;
+}
+const LINEA='______________________';
+function tablaPartes(ctx,t){
+  const e=D.ajustes.empresa;
+  tabla(ctx,{
+    body:[['Empresa', e.nombre||LINEA, 'CIF / NIF', e.cif||LINEA],
+          ['Trabajador/a', t?t.nombre:'', 'DNI / NIE', (t&&t.dni)||LINEA]],
+    columnStyles:{0:{fontStyle:'bold',cellWidth:30,fillColor:[246,248,249]},2:{fontStyle:'bold',cellWidth:24,fillColor:[246,248,249]},3:{cellWidth:46}}
+  });
+}
+function firmas(ctx){
+  const doc=ctx.doc, W=ctx.W, e=D.ajustes.empresa;
+  if(ctx.y>225){ doc.addPage(); ctx.y=24; }
+  parrafo(ctx,'En '+(e.localidad||'________________')+', a '+fFechaLarga(hoyISO())+'.');
+  const y=ctx.y+30, m=(W-28-16)/2;
+  doc.setDrawColor(60); doc.setLineWidth(.3);
+  doc.line(14,y,14+m,y); doc.line(W-14-m,y,W-14,y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(60);
+  doc.text('Firma del trabajador/a',14+m/2,y+5,{align:'center'});
+  doc.text('Firma y sello de la empresa',W-14-m/2,y+5,{align:'center'});
+  doc.setTextColor(0);
+  ctx.y=y+12;
+}
+function pieDePagina(doc){
+  const n=doc.internal.getNumberOfPages();
+  const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight();
+  for(let i=1;i<=n;i++){
+    doc.setPage(i);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(135);
+    doc.text('Control de vacaciones · generado el '+fFecha(hoyISO()), 14, H-8);
+    doc.text(i+' / '+n, W-14, H-8, {align:'right'});
+  }
+  doc.setTextColor(0);
+}
+const slug=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+function nuevoDoc(){
+  if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('No se ha cargado la librería de PDF.');
+  const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
+  return {doc:doc, y:0, W:doc.internal.pageSize.getWidth()};
+}
+
+function docJustificante(p){
+  const t=getTrab(p.trabajadorId), c=cuenta(p.desde,p.hasta);
+  const ctx=nuevoDoc(), doc=ctx.doc;
+  ctx.y=cabecera(doc,ctx.W,'JUSTIFICANTE DE VACACIONES', t?t.nombre:'');
+  tablaPartes(ctx,t);
+  parrafo(ctx,'Por el presente documento, el/la trabajador/a arriba indicado/a declara haber solicitado, y la empresa haber concedido, el disfrute del siguiente periodo de vacaciones:');
+  const cuerpo=[
+    ['Periodo', suelto(p) ? fFechaLarga(p.desde) : 'Del '+fFechaLarga(p.desde)+' al '+fFechaLarga(p.hasta)+', ambos inclusive'],
+    ['Días laborables de vacaciones', String(c.lab)],
+    ['Días naturales (incluidos festivos)', String(c.nat)],
+    ['Fecha de reincorporación', fFechaLarga(reincorporacion(p.hasta))]
+  ];
+  if(p.notas) cuerpo.push(['Observaciones', p.notas]);
+  tabla(ctx,{ body:cuerpo, columnStyles:{0:{fontStyle:'bold',cellWidth:72,fillColor:[246,248,249]}},
+    didParseCell:d=>{ if(d.row.index===1 && d.column.index===1){ d.cell.styles.fontStyle='bold'; d.cell.styles.fontSize=12; } } });
+  if(c.fest.length){
+    parrafo(ctx,'Días festivos o no laborables comprendidos en el periodo, que no se computan como vacaciones: '+
+      c.fest.map(d=>fNum(d)+(festivos()[d]?' ('+festivos()[d]+')':'')).join(', ')+'.', 9, true);
+  }
+  parrafo(ctx,'Y para que conste, ambas partes firman el presente justificante por duplicado.');
+  firmas(ctx);
+  pieDePagina(doc);
+  return doc;
+}
+function docResumen(tid,y){
+  const t=getTrab(tid), r=resumenAnual(tid,y);
+  const ctx=nuevoDoc(), doc=ctx.doc;
+  ctx.y=cabecera(doc,ctx.W,'RESUMEN ANUAL DE VACACIONES '+y, t?t.nombre:'');
+  tablaPartes(ctx,t);
+  tabla(ctx,{
+    head:[['Desde','Hasta','Laborables','Naturales','Observaciones']],
+    body: r.filas.length ? r.filas.map(f=>[fNum(f.desde), fNum(f.hasta), String(f.lab), String(f.nat),
+            (f.p.notas||'')+(f.parcial?(f.p.notas?' · ':'')+'parte del periodo '+fNum(f.p.desde)+' a '+fNum(f.p.hasta):'')])
+          : [[{content:'Sin vacaciones apuntadas en '+y, colSpan:5, styles:{textColor:[110,110,110]}}]],
+    foot:[['TOTAL '+y,'',String(r.lab),String(r.nat),'']],
+    showFoot:'lastPage', rowPageBreak:'avoid',
+    columnStyles:{0:{cellWidth:26},1:{cellWidth:26},2:{cellWidth:26,halign:'right'},3:{cellWidth:26,halign:'right'}},
+    didParseCell:d=>{ if(d.section!=='body' && (d.column.index===2||d.column.index===3)) d.cell.styles.halign='right'; }
+  });
+  tabla(ctx,{
+    body:[['Días laborables de vacaciones disfrutados', String(r.lab)],
+          ['Días naturales de vacaciones (incluidos festivos)', String(r.nat)],
+          ['Días laborables de vacaciones al año', String(r.dias)],
+          ['Días laborables pendientes', String(r.pend)]],
+    columnStyles:{0:{fontStyle:'bold',fillColor:[246,248,249]},1:{halign:'right',cellWidth:30,fontStyle:'bold'}}
+  });
+  parrafo(ctx,'Los días laborables no incluyen festivos ni días no laborables. Los días naturales cuentan todos los días de cada periodo, incluidos los festivos.',9,true);
+  firmas(ctx);
+  pieDePagina(doc);
+  return doc;
+}
+async function entrega(doc,nombre,modo){
+  const blob=doc.output('blob');
+  if(modo==='compartir'){
+    try{
+      const f=new File([blob],nombre,{type:'application/pdf'});
+      if(navigator.canShare && navigator.canShare({files:[f]})){
+        await navigator.share({files:[f], title:nombre}); return;
+      }
+      toast('Este móvil no puede compartir ficheros; se descarga');
+    }catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  descargar(blob,nombre);
+  toast('PDF guardado en Descargas');
+}
+function conPDF(fn){
+  try{ fn(); }
+  catch(e){ console.error(e); toast('No se pudo crear el PDF'); }
+}
+ACT['pdf-just']=el=>conPDF(()=>{
+  const p=getPer(el.dataset.id); if(!p){ toast('Apunte no encontrado'); return; }
+  entrega(docJustificante(p),'vacaciones-'+slug(nomTrab(p.trabajadorId))+'-'+p.desde+'.pdf',el.dataset.modo);
+});
+ACT['pdf-res']=el=>conPDF(()=>{
+  const t=trabActual(); if(!t) return;
+  entrega(docResumen(t.id,anio),'vacaciones-'+slug(t.nombre)+'-resumen-'+anio+'.pdf',el.dataset.modo);
+});
+
+/* =========================================================
+   INFORMES
+   ========================================================= */
+VISTAS['informes']=function(){
+  const t=trabActual();
+  if(!t) return {titulo:'Informes', html:sinTrabajadores(), nav:'informes'};
+  const r=resumenAnual(t.id,anio);
+  let h=selTrab()+selAnio();
+  h+='<div class="card"><div class="card-h">Resumen anual '+anio+'</div><div class="tw"><table class="res">'+
+     '<thead><tr><th>Desde</th><th>Hasta</th><th class="n">Laborables</th><th class="n">Naturales</th></tr></thead><tbody>'+
+     (r.filas.length ? r.filas.map(f=>'<tr><td>'+fNum(f.desde)+'</td><td>'+fNum(f.hasta)+'</td><td class="n">'+f.lab+'</td><td class="n">'+f.nat+'</td></tr>').join('')
+                     : '<tr><td colspan="4" class="muted">Sin vacaciones apuntadas en '+anio+'</td></tr>')+
+     '</tbody><tfoot><tr><td colspan="2">Total '+anio+'</td><td class="n" id="res-lab">'+r.lab+'</td><td class="n" id="res-nat">'+r.nat+'</td></tr></tfoot></table></div>'+
+     '<div class="fila"><span class="k">Días laborables al año</span><span class="v">'+r.dias+'</span></div>'+
+     '<div class="fila"><span class="k">Laborables pendientes</span><span class="v">'+r.pend+'</span></div>'+
+     '<div style="padding:14px;border-top:1px solid var(--line2)">'+
+     '<div class="hint" style="margin:0 0 12px">Laborables: sin festivos. Naturales: todos los días de cada periodo, festivos incluidos.</div>'+
+     '<div class="btnrow"><button class="btn primary" data-act="pdf-res" data-modo="descargar">'+I.pdf+' PDF</button>'+
+     '<button class="btn" data-act="pdf-res" data-modo="compartir">'+I.comp+' Compartir</button></div></div></div>';
+
+  h+='<div class="card"><div class="card-h">Justificantes de '+anio+'</div>';
+  if(!r.filas.length) h+='<div class="empty" style="padding:22px">'+I.hoja+'<p class="small">No hay periodos en '+anio+'.</p></div>';
+  else{
+    h+='<div class="lst">';
+    r.filas.forEach(f=>{
+      h+='<button class="li" data-act="ir" data-h="#/periodo/'+f.p.id+'"><div class="gro"><div class="t">'+esc(fPeriodo(f.p))+'</div>'+
+         '<div class="s">'+txtCuenta(cuenta(f.p.desde,f.p.hasta))+'</div></div><div class="chev">'+I.chev+'</div></button>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  return {titulo:'Informes', sub:t.nombre+' · '+anio, html:h, nav:'informes'};
+};
+
+/* =========================================================
+   AJUSTES
+   ========================================================= */
+VISTAS['ajustes']=function(){
+  const a=D.ajustes, e=a.empresa;
+  const dias=diasDesde(D.meta.ultimaCopia);
+  let h='';
+  const compartible=puedeCompartirFicheros();
+  h+='<div class="card"><div class="card-h">Copia de seguridad</div><div style="padding:14px">'+
+     (D.meta.ultimaCopia
+        ? '<div class="small muted mb">Última copia: '+fFecha(D.meta.ultimaCopia)+(dias>0?' (hace '+pl(dias,'día','días')+')':' (hoy)')+'</div>'
+        : '<div class="note w" style="margin-bottom:12px">'+I.aviso+'<div>Todavía no has hecho ninguna copia. Los datos están sólo en este móvil.</div></div>')+
+     (compartible
+       ? '<div class="small muted mb">Abre el menú de compartir del móvil: eliges <b>Drive</b>, Gmail o WhatsApp y se va directo.</div>'+
+         '<button class="btn primary block" data-act="copia" data-modo="compartir">'+I.comp+' Enviar copia</button>'+
+         '<div class="btnrow" style="margin-top:10px">'+
+         '<button class="btn" data-act="copia" data-modo="descargar">Descargar</button>'+
+         '<button class="btn danger" data-act="restaurar">Restaurar</button></div>'
+       : '<div class="note w" style="margin-bottom:12px">'+I.aviso+'<div>Este navegador no deja compartir ficheros. Descárgala y muévela tú.</div></div>'+
+         '<div class="btnrow">'+
+         '<button class="btn primary" data-act="copia" data-modo="descargar">Descargar copia</button>'+
+         '<button class="btn danger" data-act="restaurar">Restaurar</button></div>')+
+     '<div class="hr"></div>'+
+     '<button class="btn block" data-act="csv">Exportar a Excel (CSV)</button>'+
+     '</div></div>';
+
+  h+='<div class="card"><div class="lst">'+
+     '<button class="li" data-act="ir" data-h="#/trabajadores">'+
+     '<div class="gro"><div class="t">Trabajadores</div><div class="s">'+pl(D.trabajadores.length,'trabajador','trabajadores')+
+     ' · nombre, DNI y días al año</div></div><div class="chev">'+I.chev+'</div></button>'+
+     '<button class="li" data-act="ir" data-h="#/empresa">'+
+     '<div class="gro"><div class="t">Empresa</div><div class="s">'+(e.nombre?esc(e.nombre):'Sin rellenar')+
+     ' · sale en el justificante y en el resumen</div></div><div class="chev">'+I.chev+'</div></button>'+
+     '<button class="li" data-act="ir" data-h="#/festivos">'+
+     '<div class="gro"><div class="t">Festivos y días no laborables</div><div class="s">'+pl(D.festivos.length,'festivo marcado','festivos marcados')+
+     '</div></div><div class="chev">'+I.chev+'</div></button></div></div>';
+
+  h+='<div class="card"><div class="card-h">Apariencia</div><div style="padding:14px">'+
+     '<select class="inp" data-ch="tema" aria-label="Apariencia">'+
+     ['auto','claro','oscuro'].map(x=>'<option value="'+x+'"'+(a.tema===x?' selected':'')+'>'+
+       (x==='auto'?'Como el móvil':x==='claro'?'Claro':'Oscuro')+'</option>').join('')+
+     '</select></div></div>';
+
+  h+='<div class="card pad small muted"><b>Control de vacaciones</b> · versión '+VERSION+'<br>'+
+     pl(D.periodos.length,'apunte','apuntes')+' · '+pl(D.trabajadores.length,'trabajador','trabajadores')+' · '+
+     pl(D.festivos.length,'festivo','festivos')+'<br>'+
+     'Todo se guarda en este móvil, sin servidor.</div>';
+
+  return {titulo:'Ajustes', html:h, nav:'ajustes'};
+};
+IN['tema']=el=>{ D.ajustes.tema=el.value; guardar(); aplicarTema(); };
+function aplicarTema(){
+  const t=D.ajustes.tema||'auto';
+  document.documentElement.setAttribute('data-theme', t==='claro'?'light':t==='oscuro'?'dark':'auto');
+  const m=document.querySelector('meta[name=theme-color]');
+  if(m) m.setAttribute('content', t==='oscuro'?'#171d23':'#6d28d9');
+}
+
+/* ---------- copia de seguridad ---------- */
+function descargar(blob,nombre){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+/* OJO: Chrome en Android sólo deja compartir ficheros de ciertos tipos, y .json NO
+   está permitido. Por eso la copia se llama .txt aunque por dentro sea JSON. */
+function puedeCompartirFicheros(){
+  try{
+    if(!navigator.canShare) return false;
+    return navigator.canShare({files:[new File(['x'],'x.txt',{type:'text/plain'})]});
+  }catch(e){ return false; }
+}
+async function compartirFichero(texto,nombre,tipo){
+  let f;
+  try{ f=new File([texto],nombre,{type:tipo}); }catch(e){ return 'no-soportado'; }
+  if(!(navigator.canShare && navigator.canShare({files:[f]}))) return 'no-soportado';
+  try{ await navigator.share({files:[f], title:nombre}); return 'ok'; }
+  catch(e){ return (e && e.name==='AbortError') ? 'cancelado' : 'error'; }
+}
+ACT['copia']=async el=>{
+  const texto=JSON.stringify(D);
+  const nombre='vacaciones-copia-'+hoyISO()+'.txt';
+  if(el.dataset.modo==='compartir'){
+    /* compartir PRIMERO: si antes esperamos a guardar, Android ya no considera
+       que la acción venga de un toque y se niega a abrir el menú */
+    const r=await compartirFichero(texto,nombre,'text/plain');
+    if(r==='cancelado') return;
+    if(r!=='ok'){
+      toast('No se pudo compartir; se descarga');
+      descargar(new Blob([texto],{type:'text/plain'}),nombre);
+    }
+  }else{
+    descargar(new Blob([texto],{type:'text/plain'}),nombre);
+    toast('Copia descargada');
+  }
+  D.meta.ultimaCopia=hoyISO(); await guardar(); render();
+};
+ACT['csv']=()=>{
+  const sep=';';
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const fil=[['Trabajador','DNI','Desde','Hasta','Laborables','Naturales','Observaciones'].join(sep)];
+  D.periodos.slice().sort((a,b)=>nomTrab(a.trabajadorId).localeCompare(nomTrab(b.trabajadorId),'es') || a.desde.localeCompare(b.desde)).forEach(p=>{
+    const t=getTrab(p.trabajadorId), c=cuenta(p.desde,p.hasta);
+    fil.push([q(nomTrab(p.trabajadorId)),q(t?t.dni:''),q(fNum(p.desde)),q(fNum(p.hasta)),c.lab,c.nat,q(p.notas||'')].join(sep));
+  });
+  if(fil.length===1){ toast('No hay datos que exportar'); return; }
+  descargar(new Blob(['﻿'+fil.join('\r\n')],{type:'text/csv'}),'vacaciones-'+hoyISO()+'.csv');
+  toast('CSV descargado');
+};
+/* Comprueba que el fichero es una copia de ESTA app y no de otra */
+function validarCopia(d){
+  if(d && Array.isArray(d.apuntes)) throw new Error('Este fichero es una copia del Diario de trabajos, no de Control de vacaciones');
+  if(d && Array.isArray(d.intervenciones)) throw new Error('Este fichero es una copia de Control de horas, no de Control de vacaciones');
+  if(!d || !d.v || d.app!==APP || !Array.isArray(d.periodos) || !Array.isArray(d.trabajadores))
+    throw new Error('El fichero no es una copia de Control de vacaciones');
+  return d;
+}
+async function restaurarTexto(txt){
+  const d=validarCopia(JSON.parse(txt));
+  if(!confirm('Vas a sustituir TODOS los datos de este móvil por los de la copia:\n\n'+
+              pl(d.periodos.length,'apunte','apuntes')+', '+pl(d.trabajadores.length,'trabajador','trabajadores')+'.\n\n¿Seguir?')) return false;
+  D=migrar(d); await guardar(); aplicarTema();
+  toast('Copia restaurada'); ir('#/'); render();
+  return true;
+}
+ACT['restaurar']=()=>{
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='.txt,.json,text/plain,application/json';
+  inp.onchange=async()=>{
+    const f=inp.files && inp.files[0]; if(!f) return;
+    try{ await restaurarTexto(await f.text()); }
+    catch(e){ console.error(e); alert('No se ha podido restaurar: '+e.message); }
+  };
+  inp.click();
+};
+
+/* =========================================================
+   TRABAJADORES Y EMPRESA
+   ========================================================= */
+VISTAS['trabajadores']=function(){
+  const ts=D.trabajadores.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  let h='<button class="btn primary block" data-act="ir" data-h="#/trabajador/nuevo">'+I.mas+' Nuevo trabajador</button>';
+  if(!ts.length) h+='<div class="empty">'+I.user+'<p>No hay trabajadores.</p></div>';
+  else{
+    h+='<div class="card mt"><div class="lst">';
+    ts.forEach(t=>{
+      h+='<button class="li" data-act="ir" data-h="#/trabajador/'+t.id+'"><div class="gro"><div class="t">'+esc(t.nombre)+'</div><div class="s">'+
+         (t.dni?esc(t.dni)+' · ':'')+pl(Number(t.dias)||0,'día laborable','días laborables')+' al año · '+pl(persDe(t.id).length,'apunte','apuntes')+
+         '</div></div><div class="chev">'+I.chev+'</div></button>';
+    });
+    h+='</div></div>';
+  }
+  return {titulo:'Trabajadores', atras:true, html:h, nav:'ajustes'};
+};
+VISTAS['trabajador']=function(p){
+  const nuevo=p[0]==='nuevo', t=nuevo?{nombre:'',dni:'',dias:22}:getTrab(p[0]);
+  if(!t){ ir('#/trabajadores'); return null; }
+  let h='<div class="card pad">'+
+    '<div class="field"><label for="t-nom">Nombre y apellidos</label><input class="inp" id="t-nom" value="'+esc(t.nombre)+'" autocomplete="off" autocapitalize="words" placeholder="Por ejemplo: Pedro García López"></div>'+
+    '<div class="field"><label for="t-dni">DNI / NIE (opcional)</label><input class="inp" id="t-dni" value="'+esc(t.dni)+'" autocomplete="off" autocapitalize="characters"></div>'+
+    '<div class="field" style="margin:0"><label for="t-dias">Días laborables de vacaciones al año</label><input class="inp" id="t-dias" type="number" inputmode="numeric" min="0" max="366" value="'+esc(t.dias)+'">'+
+    '<div class="hint">Sirve para calcular los días pendientes.</div></div></div>'+
+    '<button class="btn primary block" data-act="guardar-trab" data-id="'+(nuevo?'':t.id)+'">'+I.ok+' Guardar</button>';
+  if(!nuevo) h+='<button class="btn danger fill block mt" data-act="borrar-trab" data-id="'+t.id+'">'+I.papel+' Eliminar trabajador</button>';
+  return {titulo:nuevo?'Nuevo trabajador':'Trabajador', atras:true, html:h, nav:'ajustes'};
+};
+ACT['guardar-trab']=async el=>{
+  const i=document.getElementById('t-nom'), n=(i.value||'').trim();
+  if(!n){ toast('Escribe el nombre'); i.focus(); return; }
+  const id=el.dataset.id;
+  if(D.trabajadores.some(x=>x.id!==id && x.nombre.toLowerCase()===n.toLowerCase())){ toast('Ya hay otro trabajador con ese nombre'); return; }
+  const dni=(document.getElementById('t-dni').value||'').trim().toUpperCase();
+  const dias=Math.max(0, Math.round(Number(document.getElementById('t-dias').value)||0));
+  if(id){ const t=getTrab(id); t.nombre=n; t.dni=dni; t.dias=dias; }
+  else{
+    const t={id:uid(), nombre:n, dni:dni, dias:dias, creado:new Date().toISOString()};
+    D.trabajadores.push(t); D.ajustes.trabajadorId=t.id;
+  }
+  await guardar(); toast('Guardado'); volver();
+};
+ACT['borrar-trab']=async el=>{
+  const t=getTrab(el.dataset.id); if(!t) return;
+  const n=persDe(t.id).length;
+  if(!confirm(n ? '¿Eliminar a "'+t.nombre+'" y sus '+pl(n,'apunte','apuntes')+' de vacaciones? No se puede deshacer.'
+                : '¿Eliminar a "'+t.nombre+'"?')) return;
+  D.periodos=D.periodos.filter(p=>p.trabajadorId!==t.id);
+  D.trabajadores=D.trabajadores.filter(x=>x.id!==t.id);
+  if(D.ajustes.trabajadorId===t.id) D.ajustes.trabajadorId=D.trabajadores[0]?D.trabajadores[0].id:null;
+  await guardar(); toast('Trabajador eliminado'); volver();
+};
+VISTAS['empresa']=function(){
+  const e=D.ajustes.empresa;
+  const h='<div class="card pad">'+
+    '<div class="field"><label for="e-nom">Nombre o razón social</label><input class="inp" id="e-nom" value="'+esc(e.nombre)+'" autocomplete="off"></div>'+
+    '<div class="field"><label for="e-cif">CIF / NIF</label><input class="inp" id="e-cif" value="'+esc(e.cif)+'" autocomplete="off" autocapitalize="characters"></div>'+
+    '<div class="field" style="margin:0"><label for="e-loc">Localidad</label><input class="inp" id="e-loc" value="'+esc(e.localidad)+'" autocomplete="off" autocapitalize="words">'+
+    '<div class="hint">Para el «En …, a fecha» de los documentos. Lo que dejes vacío sale como una línea para rellenar a mano.</div></div></div>'+
+    '<button class="btn primary block" data-act="guardar-emp">'+I.ok+' Guardar</button>';
+  return {titulo:'Empresa', atras:true, html:h, nav:'ajustes'};
+};
+ACT['guardar-emp']=async()=>{
+  const v=id=>(document.getElementById(id).value||'').trim();
+  D.ajustes.empresa={ nombre:v('e-nom'), cif:v('e-cif').toUpperCase(), localidad:v('e-loc') };
+  await guardar(); toast('Guardado'); volver();
+};
+
+/* =========================================================
+   ARRANQUE
+   ========================================================= */
+(async function arranque(){
+  try{ await cargar(); }
+  catch(e){ console.error(e); D=estadoNuevo(); }
+  aplicarTema();
+  window.addEventListener('hashchange',render);
+  if(!location.hash) location.replace('#/');
+  render();
+  try{
+    if(navigator.storage && navigator.storage.persist){
+      const ya=await navigator.storage.persisted();
+      if(!ya) await navigator.storage.persist();
+    }
+  }catch(e){}
+  if('serviceWorker' in navigator){
+    const yaControlada = !!navigator.serviceWorker.controller;
+    let recargando=false;
+    /* cuando entra una versión nueva, recargar sola; si estás a medio elegir
+       días, esperar y avisar en vez de tirar la selección */
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(!yaControlada || recargando) return;
+      if(borrador){ toast('Hay una versión nueva; se pondrá al salir de aquí'); return; }
+      recargando=true; location.reload();
+    });
+    const registrar=()=>{
+      navigator.serviceWorker.register('./sw.js').then(reg=>{
+        reg.update().catch(()=>{});
+        setInterval(()=>reg.update().catch(()=>{}), 3600000);
+      }).catch(e=>console.warn('No se pudo registrar el service worker',e));
+    };
+    /* el arranque es asíncrono y el evento 'load' puede haber pasado ya */
+    if(document.readyState==='complete') registrar();
+    else window.addEventListener('load',registrar);
+  }
+})();
+</script>
+</body>
+</html>
