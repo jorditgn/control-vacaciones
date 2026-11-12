@@ -130,6 +130,11 @@ select.inp{-webkit-appearance:none;appearance:none;padding-right:46px;font-weigh
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 13px center;background-size:22px 22px}
 #f-tipo{border:2px solid var(--accent)}
+/* El motivo se queda pegado bajo la cabecera: la pantalla se abre ya bajada
+   hasta el mes en curso y, si no, quedaba arriba, fuera de la vista. */
+.pegado{position:sticky;top:var(--hh,56px);z-index:20;background:var(--bg);margin:-14px -16px 12px;padding:10px 16px;
+  border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(16,24,32,.08)}
+.pegado label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px}
 .inp:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
 textarea.inp{min-height:64px;resize:vertical}
 .hint{font-size:12px;color:var(--muted);margin-top:5px}
@@ -250,7 +255,7 @@ nav.bot a[aria-current="page"]{color:var(--accent)}
    (sin festivos) y los naturales (todos los días).
    ========================================================= */
 
-const VERSION='5';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
+const VERSION='6';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
 /* OJO: esta app comparte dominio con el Diario de trabajos y con Control de horas
    (jorditgn.github.io), y por tanto comparte IndexedDB y localStorage. Estos
    nombres NO pueden coincidir con los de las otras. */
@@ -526,6 +531,8 @@ function render(){
   if(location.hash!==ultimoHash){
     ultimoHash=location.hash;
     /* los calendarios se abren por el mes en curso (o por el del periodo elegido) */
+    const cab=document.querySelector('header.top');
+    if(cab) document.documentElement.style.setProperty('--hh', cab.offsetHeight+'px');
     const m = R.mes!=null ? document.getElementById('mes-'+R.mes) : null;
     if(m) m.scrollIntoView({block:'center'}); else window.scrollTo(0,0);
   }
@@ -701,9 +708,10 @@ VISTAS['nuevo']=function(){
   if(!borrador) borrador={ id:null, trabajadorId:t0.id, tipo:'vac', desde:null, hasta:null, etapa:0, notas:'' };
   const b=borrador, t=getTrab(b.trabajadorId)||t0;
   if(!TIPOS[b.tipo]) b.tipo='vac';
-  const h='<div class="field"><label for="f-tipo">Qué se apunta (toca para elegir el motivo)</label><select class="inp" id="f-tipo" data-ch="tipo">'+
+  const h='<div class="pegado"><label for="f-tipo">Qué se apunta (toca para elegir el motivo)</label><select class="inp" id="f-tipo" data-ch="tipo">'+
     Object.keys(TIPOS).map(k=>'<option value="'+k+'"'+(k===b.tipo?' selected':'')+'>'+(k==='vac'?'Vacaciones':'Ausencia: '+TIPOS[k])+'</option>').join('')+
-    '</select><div class="hint">Las ausencias (enfermedad, visita médica, falta justificada, otros) no gastan días de vacaciones.</div></div>'+
+    '</select></div>'+
+    '<div class="hint" style="margin:0 0 12px">Las ausencias (enfermedad, visita médica, falta justificada, otros) no gastan días de vacaciones.</div>'+
     selAnio()+avisoSinFestivos()+LEYENDA+
     '<div class="note i">'+I.info+'<div>Toca un día para apuntarlo como <b>día suelto</b>. Toca después otro día para formar un <b>grupo</b>: puede incluir festivos, pero sólo se cuentan los laborables.</div></div>'+
     calendario(t.id,b,b.id)+
