@@ -51,9 +51,8 @@ uno que no tenga ningún día laborable.
 Apuntar ausencias
 -----------------
 Para los días laborables en que el trabajador no asiste:
-Inicio → «Apuntar ausencia» → tocar el motivo (Enfermedad, Visita médica
-u Otros) → tocar el día o los días → Guardar. Sin motivo no deja guardar.
-Para cambiar el motivo después: abrir el apunte → «Cambiar».
+Inicio → «Apuntar ausencia» → elegir el motivo (Enfermedad, Visita médica,
+Falta justificada u Otros) → tocar el día o los días → Guardar.
 En Observaciones se puede escribir el detalle.
 - Las ausencias NO gastan días de vacaciones: los pendientes no cambian.
 - En el calendario salen en naranja; las vacaciones, en morado.

@@ -125,6 +125,11 @@ main{padding:14px 16px 20px; max-width:620px; margin:0 auto}
   width:100%;min-width:0;min-height:48px;padding:10px 12px;border:1px solid var(--line);
   border-radius:var(--r-sm);background:var(--card);
 }
+/* los desplegables llevan una flecha bien visible, para que se vea que hay opciones */
+select.inp{-webkit-appearance:none;appearance:none;padding-right:46px;font-weight:650;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;background-size:22px 22px}
+#f-tipo{border:2px solid var(--accent)}
 .inp:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
 textarea.inp{min-height:64px;resize:vertical}
 .hint{font-size:12px;color:var(--muted);margin-top:5px}
@@ -176,10 +181,6 @@ textarea.inp{min-height:64px;resize:vertical}
 .day.aus{background:var(--aus);color:#fff;font-weight:650}
 .day.aus.fest{background:repeating-linear-gradient(45deg,var(--aus),var(--aus) 5px,var(--danger) 5px,var(--danger) 8px);color:#fff}
 .etq{display:inline-block;font-size:11.5px;font-weight:650;padding:1px 7px;border-radius:99px;background:var(--aus);color:#fff;margin-right:6px;vertical-align:1px}
-.tipos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.tipos button{min-height:52px;border:2px solid var(--line);border-radius:var(--r-sm);background:var(--card);color:var(--text);font:inherit;font-weight:650;font-size:15.5px;cursor:pointer;padding:6px 8px}
-.tipos button.on{border-color:var(--aus);background:var(--aus);color:#fff}
-.tipos button.on[data-t="vac"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
 .day.sel{outline:3px solid var(--sel);outline-offset:-3px}
 .day.hoy{box-shadow:inset 0 0 0 1.5px var(--text)}
 .wk{display:flex;gap:6px;flex-wrap:wrap}
@@ -249,7 +250,7 @@ nav.bot a[aria-current="page"]{color:var(--accent)}
    (sin festivos) y los naturales (todos los días).
    ========================================================= */
 
-const VERSION='4';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
+const VERSION='5';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
 /* OJO: esta app comparte dominio con el Diario de trabajos y con Control de horas
    (jorditgn.github.io), y por tanto comparte IndexedDB y localStorage. Estos
    nombres NO pueden coincidir con los de las otras. */
@@ -412,7 +413,6 @@ const periodoEn = (tid,s) => D.periodos.find(p=>p.trabajadorId===tid && p.desde<
    Las ausencias son días laborables que no se trabajan y NO gastan vacaciones. */
 const TIPOS={ vac:'Vacaciones', enf:'Enfermedad', med:'Visita médica', jus:'Falta justificada', otr:'Otros' };
 const AUSENCIAS=['enf','med','jus','otr'];
-const ELEGIBLES=['vac','enf','med','otr'];   /* 'jus' ya no se ofrece; se conserva por si hay alguno apuntado */
 const tipoDe = p => (p && TIPOS[p.tipo]) ? p.tipo : 'vac';
 const esVac  = p => tipoDe(p)==='vac';
 const nomTipo = p => TIPOS[tipoDe(p)];
@@ -676,8 +676,7 @@ VISTAS['inicio']=function(){
 ACT['nuevo-per']=()=>{ borrador=null; ir('#/nuevo'); };
 ACT['nueva-aus']=()=>{
   const t=trabActual(); if(!t) return;
-  /* sin motivo elegido: hay que tocar uno, para que no salgan todas como «Enfermedad» */
-  borrador={ id:null, trabajadorId:t.id, tipo:null, ausencia:true, desde:null, hasta:null, etapa:0, notas:'' };
+  borrador={ id:null, trabajadorId:t.id, tipo:'enf', desde:null, hasta:null, etapa:0, notas:'' };
   ir('#/nuevo');
 };
 
@@ -701,11 +700,10 @@ VISTAS['nuevo']=function(){
   const t0=trabActual(); if(!t0){ ir('#/'); return null; }
   if(!borrador) borrador={ id:null, trabajadorId:t0.id, tipo:'vac', desde:null, hasta:null, etapa:0, notas:'' };
   const b=borrador, t=getTrab(b.trabajadorId)||t0;
-  if(b.tipo && !TIPOS[b.tipo]) b.tipo='vac';
-  const ops=ELEGIBLES.concat(b.tipo && ELEGIBLES.indexOf(b.tipo)<0 ? [b.tipo] : []);
-  const h='<div class="field"><label>Qué se apunta (toca uno)</label><div class="tipos" id="f-tipo">'+
-    ops.map(k=>'<button type="button" data-act="tipo" data-t="'+k+'"'+(k===b.tipo?' class="on"':'')+'>'+TIPOS[k]+'</button>').join('')+
-    '</div><div class="hint">Enfermedad, visita médica y otros son ausencias: no gastan días de vacaciones.</div></div>'+
+  if(!TIPOS[b.tipo]) b.tipo='vac';
+  const h='<div class="field"><label for="f-tipo">Qué se apunta (toca para elegir el motivo)</label><select class="inp" id="f-tipo" data-ch="tipo">'+
+    Object.keys(TIPOS).map(k=>'<option value="'+k+'"'+(k===b.tipo?' selected':'')+'>'+(k==='vac'?'Vacaciones':'Ausencia: '+TIPOS[k])+'</option>').join('')+
+    '</select><div class="hint">Las ausencias (enfermedad, visita médica, falta justificada, otros) no gastan días de vacaciones.</div></div>'+
     selAnio()+avisoSinFestivos()+LEYENDA+
     '<div class="note i">'+I.info+'<div>Toca un día para apuntarlo como <b>día suelto</b>. Toca después otro día para formar un <b>grupo</b>: puede incluir festivos, pero sólo se cuentan los laborables.</div></div>'+
     calendario(t.id,b,b.id)+
@@ -715,7 +713,7 @@ VISTAS['nuevo']=function(){
     '<div class="v" id="sel-tot">'+esc(totSel())+'</div></div>'+
     '<button class="btn primary" data-act="guardar-per">'+I.ok+' Guardar</button></div>';
   const mes = b.desde && +b.desde.slice(0,4)===anio ? +b.desde.slice(5,7)-1 : mesInicial();
-  return {titulo: b.id?'Cambiar apunte':(b.ausencia||(b.tipo&&b.tipo!=='vac')?'Apuntar ausencia':'Apuntar vacaciones'), sub:t.nombre, atras:true, html:h, nav:false, savebar:sb, mes:mes};
+  return {titulo: b.id?'Cambiar apunte':(b.tipo==='vac'?'Apuntar vacaciones':'Apuntar ausencia'), sub:t.nombre, atras:true, html:h, nav:false, savebar:sb, mes:mes};
 };
 function txtSel(){
   const b=borrador;
@@ -741,11 +739,7 @@ function refrescaSel(){
   if(c) c.textContent=totSel();
 }
 IN['notas']=el=>{ if(borrador) borrador.notas=el.value; };
-ACT['tipo']=el=>{                                  /* sin render(): ver refrescaSel */
-  if(!borrador || !TIPOS[el.dataset.t]) return;
-  borrador.tipo=el.dataset.t;
-  document.querySelectorAll('#f-tipo button').forEach(x=>x.classList.toggle('on', x===el));
-};
+IN['tipo']=el=>{ if(borrador && TIPOS[el.value]) borrador.tipo=el.value; };   /* sin render(): ver refrescaSel */
 
 ACT['dia']=async el=>{
   const s=el.dataset.d;
@@ -774,8 +768,6 @@ ACT['dia']=async el=>{
 };
 ACT['guardar-per']=async()=>{
   const b=borrador; if(!b) return;
-  if(!b.tipo){ toast('Elige arriba el motivo: enfermedad, visita médica u otros');
-    const e=document.getElementById('f-tipo'); if(e) e.scrollIntoView({block:'center'}); return; }
   if(!b.desde){ toast('Toca un día en el calendario'); return; }
   const c=cuenta(b.desde,b.hasta);
   if(c.lab===0){ toast('Esos días no tienen ningún laborable'); return; }
