@@ -48,7 +48,20 @@ No se puede guardar un periodo que pise a otro del mismo trabajador, ni
 uno que no tenga ningún día laborable.
 
 
-Justificante para firmar
+Apuntar ausencias
+-----------------
+Para los días laborables en que el trabajador no asiste:
+Inicio → «Apuntar ausencia» → elegir el motivo (Enfermedad, Visita médica,
+Falta justificada u Otros) → tocar el día o los días → Guardar.
+En Observaciones se puede escribir el detalle.
+- Las ausencias NO gastan días de vacaciones: los pendientes no cambian.
+- En el calendario salen en naranja; las vacaciones, en morado.
+- Tienen su propio justificante para firmar y salen aparte en el resumen
+  anual, con el total por motivo.
+- Un mismo día no puede ser a la vez vacaciones y ausencia.
+- Se cuentan por días enteros.
+
+
 ------------------------
 Tocar un periodo (en Inicio, en el Calendario o en Informes) → «PDF» o
 «Compartir». El documento lleva el periodo, los laborables, los naturales,

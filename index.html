@@ -15,7 +15,7 @@
   --danger:#c62828; --danger-soft:#fdecec;
   --ok:#1b7f3b; --ok-soft:#e7f5ec;
   --warn:#8a5a00; --warn-soft:#fff5e0;
-  --sel:#e0a100;
+  --sel:#e0a100; --aus:#c2410c;
   --r:14px; --r-sm:10px;
   --sh:0 1px 2px rgba(16,24,32,.06), 0 1px 3px rgba(16,24,32,.04);
 }
@@ -27,7 +27,7 @@
     --danger:#ff6b6b; --danger-soft:#2d1a1a;
     --ok:#4ade80; --ok-soft:#14271b;
     --warn:#fbbf5c; --warn-soft:#2b2113;
-    --sel:#f2c14e;
+    --sel:#f2c14e; --aus:#ea580c;
     --sh:0 1px 2px rgba(0,0,0,.4);
   }
 }
@@ -38,7 +38,7 @@
   --danger:#ff6b6b; --danger-soft:#2d1a1a;
   --ok:#4ade80; --ok-soft:#14271b;
   --warn:#fbbf5c; --warn-soft:#2b2113;
-  --sel:#f2c14e;
+  --sel:#f2c14e; --aus:#ea580c;
   --sh:0 1px 2px rgba(0,0,0,.4);
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -173,6 +173,9 @@ textarea.inp{min-height:64px;resize:vertical}
 .day.fest{color:var(--danger);background:var(--danger-soft);font-weight:650}
 .day.vac{background:var(--accent);color:var(--accent-ink);font-weight:650}
 .day.vac.fest{background:repeating-linear-gradient(45deg,var(--accent),var(--accent) 5px,var(--danger) 5px,var(--danger) 8px);color:#fff}
+.day.aus{background:var(--aus);color:#fff;font-weight:650}
+.day.aus.fest{background:repeating-linear-gradient(45deg,var(--aus),var(--aus) 5px,var(--danger) 5px,var(--danger) 8px);color:#fff}
+.etq{display:inline-block;font-size:11.5px;font-weight:650;padding:1px 7px;border-radius:99px;background:var(--aus);color:#fff;margin-right:6px;vertical-align:1px}
 .day.sel{outline:3px solid var(--sel);outline-offset:-3px}
 .day.hoy{box-shadow:inset 0 0 0 1.5px var(--text)}
 .wk{display:flex;gap:6px;flex-wrap:wrap}
@@ -242,7 +245,7 @@ nav.bot a[aria-current="page"]{color:var(--accent)}
    (sin festivos) y los naturales (todos los días).
    ========================================================= */
 
-const VERSION='2';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
+const VERSION='3';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
 /* OJO: esta app comparte dominio con el Diario de trabajos y con Control de horas
    (jorditgn.github.io), y por tanto comparte IndexedDB y localStorage. Estos
    nombres NO pueden coincidir con los de las otras. */
@@ -401,6 +404,13 @@ const nomTrab = id => { const t=getTrab(id); return t?t.nombre:'(trabajador borr
 function trabActual(){ return getTrab(D.ajustes.trabajadorId) || D.trabajadores[0] || null; }
 const persDe = tid => D.periodos.filter(p=>p.trabajadorId===tid).sort((a,b)=>a.desde.localeCompare(b.desde));
 const periodoEn = (tid,s) => D.periodos.find(p=>p.trabajadorId===tid && p.desde<=s && s<=p.hasta);
+/* Tipo de apunte. Sin tipo (apuntes de las versiones 1 y 2) = vacaciones.
+   Las ausencias son días laborables que no se trabajan y NO gastan vacaciones. */
+const TIPOS={ vac:'Vacaciones', enf:'Enfermedad', med:'Visita médica', jus:'Falta justificada', otr:'Otros' };
+const AUSENCIAS=['enf','med','jus','otr'];
+const tipoDe = p => (p && TIPOS[p.tipo]) ? p.tipo : 'vac';
+const esVac  = p => tipoDe(p)==='vac';
+const nomTipo = p => TIPOS[tipoDe(p)];
 const suelto = p => p.desde===p.hasta;
 const fPeriodo = p => suelto(p) ? fFechaDia(p.desde) : 'Del '+fFecha(p.desde)+' al '+fFecha(p.hasta);
 const txtCuenta = c => pl(c.lab,'laborable','laborables')+' · '+pl(c.nat,'natural','naturales');
@@ -413,12 +423,16 @@ function recorte(p,y){
   return a<=b ? {desde:a, hasta:b} : null;
 }
 function resumenAnual(tid,y){
-  const r={filas:[], nat:0, lab:0};
+  /* filas, nat, lab: sólo vacaciones. aus, ausNat, ausLab, porTipo: ausencias. todas: todo junto. */
+  const r={filas:[], nat:0, lab:0, aus:[], ausNat:0, ausLab:0, porTipo:{}, todas:[]};
   persDe(tid).forEach(p=>{
     const c=recorte(p,y); if(!c) return;
-    const n=cuenta(c.desde,c.hasta);
-    r.nat+=n.nat; r.lab+=n.lab;
-    r.filas.push({p:p, desde:c.desde, hasta:c.hasta, nat:n.nat, lab:n.lab, parcial:c.desde!==p.desde||c.hasta!==p.hasta});
+    const n=cuenta(c.desde,c.hasta), tp=tipoDe(p);
+    const f={p:p, tipo:tp, desde:c.desde, hasta:c.hasta, nat:n.nat, lab:n.lab, parcial:c.desde!==p.desde||c.hasta!==p.hasta};
+    r.todas.push(f);
+    if(tp==='vac'){ r.nat+=n.nat; r.lab+=n.lab; r.filas.push(f); }
+    else{ r.ausNat+=n.nat; r.ausLab+=n.lab; r.aus.push(f);
+          const t=r.porTipo[tp]||(r.porTipo[tp]={lab:0,nat:0}); t.lab+=n.lab; t.nat+=n.nat; }
   });
   const t=getTrab(tid);
   r.dias = t ? (Number(t.dias)||0) : 0;
@@ -547,6 +561,7 @@ function selTrab(){
 }
 function mesInicial(){ return anio===new Date().getFullYear() ? new Date().getMonth() : 0; }
 const LEYENDA='<div class="leyenda"><span><i style="background:var(--accent)"></i>Vacaciones</span>'+
+  '<span><i style="background:var(--aus)"></i>Ausencia</span>'+
   '<span><i style="background:var(--danger-soft);border:1px solid var(--danger)"></i>Festivo o no laborable</span></div>';
 
 /* Calendario del año. tid: trabajador cuyas vacaciones se pintan (o null);
@@ -554,23 +569,24 @@ const LEYENDA='<div class="leyenda"><span><i style="background:var(--accent)"></
 function calendario(tid, sel, sinId){
   const hoy=hoyISO();
   const pers = tid ? D.periodos.filter(p=>p.trabajadorId===tid && p.id!==sinId) : [];
-  const enVac = s => pers.some(p=>p.desde<=s && s<=p.hasta);
+  const perEn = s => pers.find(p=>p.desde<=s && s<=p.hasta);
   let h='';
   for(let m=0;m<12;m++){
     const dias=new Date(Date.UTC(anio,m+1,0)).getUTCDate();
     const hueco=(new Date(Date.UTC(anio,m,1)).getUTCDay()+6)%7;   /* la semana empieza en lunes */
     let c=['L','M','X','J','V','S','D'].map(d=>'<div class="dow">'+d+'</div>').join('');
     for(let k=0;k<hueco;k++) c+='<div></div>';
-    let vl=0;
+    let vl=0, al=0;
     for(let d=1;d<=dias;d++){
-      const s=iso(anio,m,d), fe=esFestivo(s), va=enVac(s);
+      const s=iso(anio,m,d), fe=esFestivo(s), pe=perEn(s), va=!!pe && esVac(pe), au=!!pe && !va;
       if(va && !fe) vl++;
-      const cl='day'+(fe?' fest':'')+(va?' vac':'')+(sel && sel.desde && sel.desde<=s && s<=sel.hasta?' sel':'')+(s===hoy?' hoy':'');
-      const nom=festivos()[s];
+      if(au && !fe) al++;
+      const cl='day'+(fe?' fest':'')+(va?' vac':'')+(au?' aus':'')+(sel && sel.desde && sel.desde<=s && s<=sel.hasta?' sel':'')+(s===hoy?' hoy':'');
+      const nom=festivos()[s] || (au?nomTipo(pe):'');
       c+='<button class="'+cl+'" data-act="dia" data-d="'+s+'"'+(nom?' title="'+esc(nom)+'"':'')+'>'+d+'</button>';
     }
     h+='<div class="card mes" id="mes-'+m+'"><h3><span>'+MESL[m]+'</span>'+
-       (vl?'<small>'+pl(vl,'laborable','laborables')+' de vacaciones</small>':'')+'</h3><div class="sem">'+c+'</div></div>';
+       (vl||al?'<small>'+[vl?vl+' de vacaciones':'', al?al+' de ausencia':''].filter(Boolean).join(' · ')+'</small>':'')+'</h3><div class="sem">'+c+'</div></div>';
   }
   return h;
 }
@@ -620,7 +636,8 @@ VISTAS['inicio']=function(){
   }
   h+=tarjetaInstalar();
   h+=selTrab()+selAnio();
-  h+='<button class="btn primary big block" data-act="nuevo-per">'+I.mas+' Apuntar vacaciones</button>';
+  h+='<button class="btn primary big block" data-act="nuevo-per">'+I.mas+' Apuntar vacaciones</button>'+
+     '<button class="btn block" style="margin-top:10px" data-act="nueva-aus">'+I.mas+' Apuntar ausencia</button>';
 
   h+='<div class="card mt"><div class="tot">'+
      '<div><div class="k">Laborables de vacaciones</div><div class="v" id="tot-lab">'+r.lab+'</div></div>'+
@@ -629,14 +646,20 @@ VISTAS['inicio']=function(){
      '<div><div class="k">Laborables pendientes</div><div class="v" id="tot-pend"'+(r.pend<0?' style="color:var(--danger)"':'')+'>'+r.pend+'</div></div>'+
      '</div></div>';
 
-  h+='<div class="card"><div class="card-h">Vacaciones de '+anio+'</div>';
-  if(!r.filas.length){
-    h+='<div class="empty">'+I.cal+'<p>No hay vacaciones apuntadas en '+anio+'.</p><p class="small">Pulsa <b>Apuntar vacaciones</b> y elige los días en el calendario.</p></div>';
+  if(r.aus.length){
+    h+='<div class="card"><div class="card-h">Ausencias de '+anio+' (no gastan vacaciones)</div>'+
+       AUSENCIAS.filter(k=>r.porTipo[k]).map(k=>'<div class="fila"><span class="k">'+TIPOS[k]+'</span><span class="v">'+pl(r.porTipo[k].lab,'laborable','laborables')+'</span></div>').join('')+
+       '<div class="fila"><span class="k"><b>Total ausencias</b></span><span class="v" id="tot-aus">'+r.ausLab+'</span></div></div>';
+  }
+  h+='<div class="card"><div class="card-h">Vacaciones y ausencias de '+anio+'</div>';
+  if(!r.todas.length){
+    h+='<div class="empty">'+I.cal+'<p>No hay nada apuntado en '+anio+'.</p><p class="small">Pulsa <b>Apuntar vacaciones</b> o <b>Apuntar ausencia</b> y elige los días en el calendario.</p></div>';
   }else{
     h+='<div class="lst">';
-    r.filas.slice().reverse().forEach(f=>{
+    r.todas.slice().reverse().forEach(f=>{
       h+='<button class="li" data-act="ir" data-h="#/periodo/'+f.p.id+'">'+
          '<div class="gro"><div class="t">'+esc(fPeriodo(f.p))+'</div><div class="s">'+
+         (f.tipo!=='vac'?'<span class="etq">'+TIPOS[f.tipo]+'</span>':'')+
          pl(f.nat,'día natural','días naturales')+(f.parcial?' en '+anio:'')+(f.p.notas?' — '+esc(f.p.notas):'')+'</div></div>'+
          '<div class="amt"><div class="v">'+f.lab+'</div><div class="u">laborables</div></div><div class="chev">'+I.chev+'</div></button>';
     });
@@ -646,6 +669,11 @@ VISTAS['inicio']=function(){
   return {titulo:'Control de vacaciones', sub:t.nombre+' · '+pl(persDe(t.id).length,'apunte','apuntes'), html:h, nav:'inicio'};
 };
 ACT['nuevo-per']=()=>{ borrador=null; ir('#/nuevo'); };
+ACT['nueva-aus']=()=>{
+  const t=trabActual(); if(!t) return;
+  borrador={ id:null, trabajadorId:t.id, tipo:'enf', desde:null, hasta:null, etapa:0, notas:'' };
+  ir('#/nuevo');
+};
 
 /* =========================================================
    CALENDARIO: vacaciones y festivos del año, de un vistazo
@@ -654,7 +682,7 @@ VISTAS['calendario']=function(){
   const t=trabActual();
   if(!t) return {titulo:'Calendario', html:sinTrabajadores(), nav:'calendario'};
   const h=selTrab()+selAnio()+avisoSinFestivos()+LEYENDA+
-    '<div class="small muted mb">Toca un día libre para apuntar vacaciones; toca un día de vacaciones para ver su periodo.</div>'+
+    '<div class="small muted mb">Toca un día libre para apuntar vacaciones o una ausencia; toca un día ya apuntado para ver su ficha.</div>'+
     calendario(t.id,null,null)+
     '<button class="btn block" data-act="ir" data-h="#/festivos">'+I.cal+' Festivos y días no laborables</button>';
   return {titulo:'Calendario '+anio, sub:t.nombre, html:h, nav:'calendario', mes:mesInicial()};
@@ -665,18 +693,22 @@ VISTAS['calendario']=function(){
    ========================================================= */
 VISTAS['nuevo']=function(){
   const t0=trabActual(); if(!t0){ ir('#/'); return null; }
-  if(!borrador) borrador={ id:null, trabajadorId:t0.id, desde:null, hasta:null, etapa:0, notas:'' };
+  if(!borrador) borrador={ id:null, trabajadorId:t0.id, tipo:'vac', desde:null, hasta:null, etapa:0, notas:'' };
   const b=borrador, t=getTrab(b.trabajadorId)||t0;
-  const h=selAnio()+avisoSinFestivos()+LEYENDA+
+  if(!TIPOS[b.tipo]) b.tipo='vac';
+  const h='<div class="field"><label for="f-tipo">Qué se apunta</label><select class="inp" id="f-tipo" data-ch="tipo">'+
+    Object.keys(TIPOS).map(k=>'<option value="'+k+'"'+(k===b.tipo?' selected':'')+'>'+(k==='vac'?'Vacaciones':'Ausencia: '+TIPOS[k])+'</option>').join('')+
+    '</select><div class="hint">Las ausencias (enfermedad, visita médica, falta justificada, otros) no gastan días de vacaciones.</div></div>'+
+    selAnio()+avisoSinFestivos()+LEYENDA+
     '<div class="note i">'+I.info+'<div>Toca un día para apuntarlo como <b>día suelto</b>. Toca después otro día para formar un <b>grupo</b>: puede incluir festivos, pero sólo se cuentan los laborables.</div></div>'+
     calendario(t.id,b,b.id)+
     '<div class="card pad"><div class="field" style="margin:0"><label for="f-notas">Observaciones (opcional)</label>'+
-    '<textarea class="inp" id="f-notas" data-in="notas" placeholder="Por ejemplo: vacaciones de verano">'+esc(b.notas)+'</textarea></div></div>';
+    '<textarea class="inp" id="f-notas" data-in="notas" placeholder="Por ejemplo: vacaciones de verano, o el motivo de la ausencia">'+esc(b.notas)+'</textarea></div></div>';
   const sb='<div class="savebar"><div class="t"><div class="k" id="sel-txt">'+esc(txtSel())+'</div>'+
     '<div class="v" id="sel-tot">'+esc(totSel())+'</div></div>'+
     '<button class="btn primary" data-act="guardar-per">'+I.ok+' Guardar</button></div>';
   const mes = b.desde && +b.desde.slice(0,4)===anio ? +b.desde.slice(5,7)-1 : mesInicial();
-  return {titulo: b.id?'Cambiar fechas':'Apuntar vacaciones', sub:t.nombre, atras:true, html:h, nav:false, savebar:sb, mes:mes};
+  return {titulo: b.id?'Cambiar apunte':(b.tipo==='vac'?'Apuntar vacaciones':'Apuntar ausencia'), sub:t.nombre, atras:true, html:h, nav:false, savebar:sb, mes:mes};
 };
 function txtSel(){
   const b=borrador;
@@ -702,6 +734,7 @@ function refrescaSel(){
   if(c) c.textContent=totSel();
 }
 IN['notas']=el=>{ if(borrador) borrador.notas=el.value; };
+IN['tipo']=el=>{ if(borrador && TIPOS[el.value]) borrador.tipo=el.value; };   /* sin render(): ver refrescaSel */
 
 ACT['dia']=async el=>{
   const s=el.dataset.d;
@@ -714,7 +747,7 @@ ACT['dia']=async el=>{
     const t=trabActual(); if(!t) return;
     const p=periodoEn(t.id,s);
     if(p){ ir('#/periodo/'+p.id); return; }
-    borrador={ id:null, trabajadorId:t.id, desde:s, hasta:s, etapa:1, notas:'' };
+    borrador={ id:null, trabajadorId:t.id, tipo:'vac', desde:s, hasta:s, etapa:1, notas:'' };
     ir('#/nuevo'); return;
   }
   if(vista==='nuevo' && borrador){
@@ -736,15 +769,15 @@ ACT['guardar-per']=async()=>{
   const choca=D.periodos.find(p=>p.trabajadorId===b.trabajadorId && p.id!==b.id && p.desde<=b.hasta && b.desde<=p.hasta);
   if(choca){ toast('Se pisa con otro apunte: '+fPeriodo(choca)); return; }
   let p;
-  if(b.id){ p=getPer(b.id); if(!p) return; p.desde=b.desde; p.hasta=b.hasta; p.notas=(b.notas||'').trim(); }
+  if(b.id){ p=getPer(b.id); if(!p) return; p.tipo=b.tipo||'vac'; p.desde=b.desde; p.hasta=b.hasta; p.notas=(b.notas||'').trim(); }
   else{
-    p={ id:uid(), trabajadorId:b.trabajadorId, desde:b.desde, hasta:b.hasta, notas:(b.notas||'').trim(), creado:new Date().toISOString() };
+    p={ id:uid(), trabajadorId:b.trabajadorId, tipo:b.tipo||'vac', desde:b.desde, hasta:b.hasta, notas:(b.notas||'').trim(), creado:new Date().toISOString() };
     D.periodos.push(p);
   }
   anio=+p.desde.slice(0,4);
   await guardar();
   borrador=null;
-  toast('Vacaciones apuntadas: '+txtCuenta(c));
+  toast((esVac(p)?'Vacaciones apuntadas: ':'Ausencia apuntada ('+nomTipo(p)+'): ')+txtCuenta(c));
   location.replace('#/periodo/'+p.id);
 };
 
@@ -754,37 +787,39 @@ ACT['guardar-per']=async()=>{
 VISTAS['periodo']=function(p0){
   const p=getPer(p0[0]); if(!p){ ir('#/'); return null; }
   const c=cuenta(p.desde,p.hasta);
-  let h='<div class="card"><div class="card-h">'+(suelto(p)?'Día suelto':'Grupo de días')+'</div>'+
+  const v=esVac(p);
+  let h='<div class="card"><div class="card-h">'+(v?'':'<span class="etq">'+nomTipo(p)+'</span>')+(suelto(p)?'Día suelto':'Grupo de días')+'</div>'+
     '<div style="padding:14px;font-weight:650;font-size:17px">'+esc(suelto(p)?fFechaLarga(p.desde):'Del '+fFechaLarga(p.desde)+' al '+fFechaLarga(p.hasta))+'</div>'+
     '<div class="tot" style="border-top:1px solid var(--line2)">'+
     '<div><div class="k">Laborables</div><div class="v" id="per-lab">'+c.lab+'</div></div>'+
     '<div><div class="k">Naturales (con festivos)</div><div class="v" id="per-nat">'+c.nat+'</div></div></div>'+
+    '<div class="fila"><span class="k">Tipo</span><span class="v" id="per-tipo">'+(v?'Vacaciones':'Ausencia: '+nomTipo(p))+'</span></div>'+
     '<div class="fila"><span class="k">Trabajador</span><span class="v">'+esc(nomTrab(p.trabajadorId))+'</span></div>'+
     '<div class="fila"><span class="k">Vuelve al trabajo</span><span class="v">'+esc(fFechaDia(reincorporacion(p.hasta)))+'</span></div>'+
     (c.fest.length?'<div class="fila"><span class="k">No laborables dentro</span><span class="v">'+c.fest.length+'</span></div>':'')+
     (p.notas?'<div class="fila"><span class="k">Observaciones</span><span class="v">'+esc(p.notas)+'</span></div>':'')+
     '</div>';
   if(c.fest.length){
-    h+='<div class="small muted mb" style="padding:0 2px">No cuentan como vacaciones: '+
+    h+='<div class="small muted mb" style="padding:0 2px">No cuentan como '+(v?'vacaciones':'ausencia')+': '+
        c.fest.map(d=>fNum(d).slice(0,5)+(festivos()[d]?' ('+esc(festivos()[d])+')':'')).join(', ')+'.</div>';
   }
   h+='<div class="card"><div class="card-h">Justificante para firmar</div><div style="padding:14px">'+
-     '<div class="small muted mb">Un PDF con el periodo, los días laborables y naturales, y sitio para la firma del trabajador y de la empresa.</div>'+
+     '<div class="small muted mb">Un PDF con '+(v?'el periodo':'el motivo de la ausencia, el periodo')+', los días laborables y naturales, y sitio para la firma del trabajador y de la empresa.</div>'+
      '<div class="btnrow"><button class="btn primary" data-act="pdf-just" data-id="'+p.id+'" data-modo="descargar">'+I.pdf+' PDF</button>'+
      '<button class="btn" data-act="pdf-just" data-id="'+p.id+'" data-modo="compartir">'+I.comp+' Compartir</button></div></div></div>'+
-     '<div class="btnrow"><button class="btn" data-act="cambiar-per" data-id="'+p.id+'">'+I.lapiz+' Cambiar fechas</button>'+
+     '<div class="btnrow"><button class="btn" data-act="cambiar-per" data-id="'+p.id+'">'+I.lapiz+' Cambiar</button>'+
      '<button class="btn danger fill" data-act="borrar-per" data-id="'+p.id+'">'+I.papel+' Eliminar</button></div>';
-  return {titulo:'Vacaciones', sub:nomTrab(p.trabajadorId), atras:true, html:h, nav:'inicio'};
+  return {titulo:v?'Vacaciones':'Ausencia', sub:nomTrab(p.trabajadorId), atras:true, html:h, nav:'inicio'};
 };
 ACT['cambiar-per']=el=>{
   const p=getPer(el.dataset.id); if(!p) return;
-  borrador={ id:p.id, trabajadorId:p.trabajadorId, desde:p.desde, hasta:p.hasta, etapa:2, notas:p.notas||'' };
+  borrador={ id:p.id, trabajadorId:p.trabajadorId, tipo:tipoDe(p), desde:p.desde, hasta:p.hasta, etapa:2, notas:p.notas||'' };
   anio=+p.desde.slice(0,4);
   ir('#/nuevo');
 };
 ACT['borrar-per']=async el=>{
   const p=getPer(el.dataset.id); if(!p) return;
-  if(!confirm('¿Eliminar este apunte de vacaciones?\n\n'+fPeriodo(p))) return;
+  if(!confirm('¿Eliminar este apunte de '+(esVac(p)?'vacaciones':'ausencia ('+nomTipo(p)+')')+'?\n\n'+fPeriodo(p))) return;
   D.periodos=D.periodos.filter(x=>x.id!==p.id);
   await guardar(); toast('Apunte eliminado'); ir('#/');
 };
@@ -912,7 +947,33 @@ function nuevoDoc(){
   return {doc:doc, y:0, W:doc.internal.pageSize.getWidth()};
 }
 
+function docJustificanteAusencia(p){
+  const t=getTrab(p.trabajadorId), c=cuenta(p.desde,p.hasta);
+  const ctx=nuevoDoc(), doc=ctx.doc;
+  ctx.y=cabecera(doc,ctx.W,'JUSTIFICANTE DE AUSENCIA', t?t.nombre:'');
+  tablaPartes(ctx,t);
+  parrafo(ctx,'Por el presente documento se deja constancia de que el/la trabajador/a arriba indicado/a no ha asistido al trabajo en el siguiente periodo, por el motivo que se indica. Estos días no se computan como vacaciones.');
+  const cuerpo=[
+    ['Motivo de la ausencia', nomTipo(p)],
+    ['Periodo', suelto(p) ? fFechaLarga(p.desde) : 'Del '+fFechaLarga(p.desde)+' al '+fFechaLarga(p.hasta)+', ambos inclusive'],
+    ['Días laborables de ausencia', String(c.lab)],
+    ['Días naturales (incluidos festivos)', String(c.nat)],
+    ['Fecha de reincorporación', fFechaLarga(reincorporacion(p.hasta))]
+  ];
+  if(p.notas) cuerpo.push(['Observaciones', p.notas]);
+  tabla(ctx,{ body:cuerpo, columnStyles:{0:{fontStyle:'bold',cellWidth:72,fillColor:[246,248,249]}},
+    didParseCell:d=>{ if((d.row.index===0||d.row.index===2) && d.column.index===1){ d.cell.styles.fontStyle='bold'; d.cell.styles.fontSize=12; } } });
+  if(c.fest.length){
+    parrafo(ctx,'Días festivos o no laborables comprendidos en el periodo, que no se computan como ausencia: '+
+      c.fest.map(d=>fNum(d)+(festivos()[d]?' ('+festivos()[d]+')':'')).join(', ')+'.', 9, true);
+  }
+  parrafo(ctx,'Y para que conste, ambas partes firman el presente justificante por duplicado.');
+  firmas(ctx);
+  pieDePagina(doc);
+  return doc;
+}
 function docJustificante(p){
+  if(!esVac(p)) return docJustificanteAusencia(p);
   const t=getTrab(p.trabajadorId), c=cuenta(p.desde,p.hasta);
   const ctx=nuevoDoc(), doc=ctx.doc;
   ctx.y=cabecera(doc,ctx.W,'JUSTIFICANTE DE VACACIONES', t?t.nombre:'');
@@ -939,7 +1000,7 @@ function docJustificante(p){
 function docResumen(tid,y){
   const t=getTrab(tid), r=resumenAnual(tid,y);
   const ctx=nuevoDoc(), doc=ctx.doc;
-  ctx.y=cabecera(doc,ctx.W,'RESUMEN ANUAL DE VACACIONES '+y, t?t.nombre:'');
+  ctx.y=cabecera(doc,ctx.W,'RESUMEN ANUAL DE VACACIONES'+(r.aus.length?' Y AUSENCIAS':'')+' '+y, t?t.nombre:'');
   tablaPartes(ctx,t);
   tabla(ctx,{
     head:[['Desde','Hasta','Laborables','Naturales','Observaciones']],
@@ -959,6 +1020,23 @@ function docResumen(tid,y){
     columnStyles:{0:{fontStyle:'bold',fillColor:[246,248,249]},1:{halign:'right',cellWidth:30,fontStyle:'bold'}}
   });
   parrafo(ctx,'Los días laborables no incluyen festivos ni días no laborables. Los días naturales cuentan todos los días de cada periodo, incluidos los festivos.',9,true);
+  if(r.aus.length){
+    parrafo(ctx,'Ausencias de '+y+' (no se computan como vacaciones):');
+    tabla(ctx,{
+      head:[['Desde','Hasta','Motivo','Laborables','Naturales','Observaciones']],
+      body: r.aus.map(f=>[fNum(f.desde), fNum(f.hasta), TIPOS[f.tipo], String(f.lab), String(f.nat),
+              (f.p.notas||'')+(f.parcial?(f.p.notas?' · ':'')+'parte del periodo '+fNum(f.p.desde)+' a '+fNum(f.p.hasta):'')]),
+      foot:[['TOTAL '+y,'','',String(r.ausLab),String(r.ausNat),'']],
+      showFoot:'lastPage', rowPageBreak:'avoid',
+      columnStyles:{0:{cellWidth:24},1:{cellWidth:24},2:{cellWidth:32},3:{cellWidth:24,halign:'right'},4:{cellWidth:22,halign:'right'}},
+      didParseCell:d=>{ if(d.section!=='body' && (d.column.index===3||d.column.index===4)) d.cell.styles.halign='right'; }
+    });
+    tabla(ctx,{
+      body: AUSENCIAS.filter(k=>r.porTipo[k]).map(k=>['Días laborables de ausencia — '+TIPOS[k], String(r.porTipo[k].lab)])
+            .concat([['Total de días laborables de ausencia', String(r.ausLab)]]),
+      columnStyles:{0:{fontStyle:'bold',fillColor:[246,248,249]},1:{halign:'right',cellWidth:30,fontStyle:'bold'}}
+    });
+  }
   firmas(ctx);
   pieDePagina(doc);
   return doc;
@@ -983,7 +1061,7 @@ function conPDF(fn){
 }
 ACT['pdf-just']=el=>conPDF(()=>{
   const p=getPer(el.dataset.id); if(!p){ toast('Apunte no encontrado'); return; }
-  entrega(docJustificante(p),'vacaciones-'+slug(nomTrab(p.trabajadorId))+'-'+p.desde+'.pdf',el.dataset.modo);
+  entrega(docJustificante(p),(esVac(p)?'vacaciones-':'ausencia-')+slug(nomTrab(p.trabajadorId))+'-'+p.desde+'.pdf',el.dataset.modo);
 });
 ACT['pdf-res']=el=>conPDF(()=>{
   const t=trabActual(); if(!t) return;
@@ -1005,18 +1083,22 @@ VISTAS['informes']=function(){
      '</tbody><tfoot><tr><td colspan="2">Total '+anio+'</td><td class="n" id="res-lab">'+r.lab+'</td><td class="n" id="res-nat">'+r.nat+'</td></tr></tfoot></table></div>'+
      '<div class="fila"><span class="k">Días laborables al año</span><span class="v">'+r.dias+'</span></div>'+
      '<div class="fila"><span class="k">Laborables pendientes</span><span class="v">'+r.pend+'</span></div>'+
+     (r.aus.length ? '<div class="card-h" style="border-top:1px solid var(--line2)">Ausencias '+anio+' (no gastan vacaciones)</div><div class="tw"><table class="res">'+
+       '<thead><tr><th>Desde</th><th>Hasta</th><th>Motivo</th><th class="n">Lab.</th><th class="n">Nat.</th></tr></thead><tbody>'+
+       r.aus.map(f=>'<tr><td>'+fNum(f.desde)+'</td><td>'+fNum(f.hasta)+'</td><td>'+TIPOS[f.tipo]+'</td><td class="n">'+f.lab+'</td><td class="n">'+f.nat+'</td></tr>').join('')+
+       '</tbody><tfoot><tr><td colspan="3">Total ausencias</td><td class="n" id="res-aus">'+r.ausLab+'</td><td class="n">'+r.ausNat+'</td></tr></tfoot></table></div>' : '')+
      '<div style="padding:14px;border-top:1px solid var(--line2)">'+
      '<div class="hint" style="margin:0 0 12px">Laborables: sin festivos. Naturales: todos los días de cada periodo, festivos incluidos.</div>'+
      '<div class="btnrow"><button class="btn primary" data-act="pdf-res" data-modo="descargar">'+I.pdf+' PDF</button>'+
      '<button class="btn" data-act="pdf-res" data-modo="compartir">'+I.comp+' Compartir</button></div></div></div>';
 
   h+='<div class="card"><div class="card-h">Justificantes de '+anio+'</div>';
-  if(!r.filas.length) h+='<div class="empty" style="padding:22px">'+I.hoja+'<p class="small">No hay periodos en '+anio+'.</p></div>';
+  if(!r.todas.length) h+='<div class="empty" style="padding:22px">'+I.hoja+'<p class="small">No hay periodos en '+anio+'.</p></div>';
   else{
     h+='<div class="lst">';
-    r.filas.forEach(f=>{
+    r.todas.forEach(f=>{
       h+='<button class="li" data-act="ir" data-h="#/periodo/'+f.p.id+'"><div class="gro"><div class="t">'+esc(fPeriodo(f.p))+'</div>'+
-         '<div class="s">'+txtCuenta(cuenta(f.p.desde,f.p.hasta))+'</div></div><div class="chev">'+I.chev+'</div></button>';
+         '<div class="s">'+(f.tipo!=='vac'?'<span class="etq">'+TIPOS[f.tipo]+'</span>':'')+txtCuenta(cuenta(f.p.desde,f.p.hasta))+'</div></div><div class="chev">'+I.chev+'</div></button>';
     });
     h+='</div>';
   }
@@ -1126,10 +1208,10 @@ ACT['copia']=async el=>{
 ACT['csv']=()=>{
   const sep=';';
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-  const fil=[['Trabajador','DNI','Desde','Hasta','Laborables','Naturales','Observaciones'].join(sep)];
+  const fil=[['Trabajador','DNI','Tipo','Desde','Hasta','Laborables','Naturales','Observaciones'].join(sep)];
   D.periodos.slice().sort((a,b)=>nomTrab(a.trabajadorId).localeCompare(nomTrab(b.trabajadorId),'es') || a.desde.localeCompare(b.desde)).forEach(p=>{
     const t=getTrab(p.trabajadorId), c=cuenta(p.desde,p.hasta);
-    fil.push([q(nomTrab(p.trabajadorId)),q(t?t.dni:''),q(fNum(p.desde)),q(fNum(p.hasta)),c.lab,c.nat,q(p.notas||'')].join(sep));
+    fil.push([q(nomTrab(p.trabajadorId)),q(t?t.dni:''),q(nomTipo(p)),q(fNum(p.desde)),q(fNum(p.hasta)),c.lab,c.nat,q(p.notas||'')].join(sep));
   });
   if(fil.length===1){ toast('No hay datos que exportar'); return; }
   descargar(new Blob(['﻿'+fil.join('\r\n')],{type:'text/csv'}),'vacaciones-'+hoyISO()+'.csv');
