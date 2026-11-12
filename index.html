@@ -242,7 +242,7 @@ nav.bot a[aria-current="page"]{color:var(--accent)}
    (sin festivos) y los naturales (todos los días).
    ========================================================= */
 
-const VERSION='1';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
+const VERSION='2';   /* se ve en Ajustes, para saber qué versión tiene el móvil */
 /* OJO: esta app comparte dominio con el Diario de trabajos y con Control de horas
    (jorditgn.github.io), y por tanto comparte IndexedDB y localStorage. Estos
    nombres NO pueden coincidir con los de las otras. */
@@ -253,6 +253,7 @@ let borrador=null;     /* periodo que se está eligiendo en el calendario */
 let anio=new Date().getFullYear();
 let vista='inicio';
 let toastT=null;
+let instalador=null;   /* el aviso de instalación que Chrome nos deja guardar */
 
 function estadoNuevo(){
   return {
@@ -307,6 +308,7 @@ async function cargar(){
   if(!d){ try{ const ls=localStorage.getItem(LSKEY); if(ls){ d=JSON.parse(ls); console.warn('Recuperado de la copia local'); } }catch(e){} }
   D = (d && d.v) ? migrar(d) : estadoNuevo();
   mapaFest=null;
+  if(precarga2026()) guardar();
 }
 let cola=Promise.resolve();
 function guardar(){
@@ -422,6 +424,32 @@ function resumenAnual(tid,y){
   r.dias = t ? (Number(t.dias)||0) : 0;
   r.pend = r.dias - r.lab;
   return r;
+}
+
+/* Calendario laboral de Tarragona de 2026 (nacionales, autonómicos y locales),
+   tal como lo dio el usuario. Los sábados y domingos van por «noLaborables». */
+const TARRAGONA_2026=[
+  ['2026-01-01','Año Nuevo'],['2026-01-06','Epifanía del Señor / Reyes'],
+  ['2026-03-19','Fiesta Patronal / San José'],['2026-04-03','Viernes Santo'],
+  ['2026-04-05','Domingo de Resurrección'],['2026-04-06','Lunes de Pascua'],
+  ['2026-05-01','Fiesta del Trabajo'],['2026-06-24','Sant Joan'],
+  ['2026-08-15','La Asunción'],['2026-08-19','Sant Magí - Fiesta Local'],
+  ['2026-09-11','Diada Nacional de Catalunya'],['2026-09-23','Santa Tecla - Fiesta Mayor de Tarragona'],
+  ['2026-10-12','Fiesta Nacional de España'],['2026-11-01','Todos los Santos'],
+  ['2026-12-06','Día de la Constitución'],['2026-12-08','La Inmaculada Concepción'],
+  ['2026-12-25','Navidad'],['2026-12-26','Sant Esteve']
+];
+function ponTarragona2026(){
+  let n=0;
+  TARRAGONA_2026.forEach(x=>{ if(!D.festivos.some(f=>f.fecha===x[0])){ D.festivos.push({fecha:x[0], nombre:x[1]}); n++; } });
+  return n;
+}
+/* Se rellena sola UNA vez (queda anotado en meta), para que un festivo que el
+   usuario quite a mano no vuelva a aparecer en cada arranque. */
+function precarga2026(){
+  if(D.meta.cal2026) return false;
+  ponTarragona2026(); D.meta.cal2026=true;
+  return true;
 }
 
 /* Festivos nacionales de España (los autonómicos y locales se añaden a mano) */
@@ -552,8 +580,26 @@ function avisoSinFestivos(){
   if(D.festivos.some(f=>f.fecha.slice(0,4)===String(anio))) return '';
   return '<div class="note w">'+I.aviso+'<div><b>'+anio+' no tiene festivos marcados.</b> Sin ellos, los festivos entre semana se cuentan como laborables. <a href="#/festivos">Marcarlos</a></div></div>';
 }
+/* Chrome no siempre ofrece instalar por su cuenta: lo ofrecemos nosotros. */
+function instalada(){
+  return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true;
+}
+function tarjetaInstalar(){
+  if(instalada()) return '';
+  if(instalador)
+    return '<div class="card pad" id="inst"><div class="mb"><b>Instala la aplicación en el móvil</b><div class="small muted">Tendrás su icono en la pantalla de inicio y funcionará sin cobertura.</div></div>'+
+           '<button class="btn primary block" data-act="instalar">'+I.pdf+' Instalar</button></div>';
+  return '<div class="note i" id="inst">'+I.info+'<div><b>Para instalarla:</b> en Chrome, menú <b>⋮</b> (arriba a la derecha) → <b>«Añadir a pantalla de inicio»</b> → <b>«Instalar»</b>. '+
+         'Si la has abierto desde WhatsApp, Gmail u otra app, ábrela antes en Chrome (⋮ → «Abrir en Chrome»). Si ya la tienes instalada, ábrela desde su icono.</div></div>';
+}
+ACT['instalar']=async()=>{
+  if(!instalador) return;
+  const ev=instalador; instalador=null;
+  try{ ev.prompt(); await ev.userChoice; }catch(e){ console.warn(e); }
+  render();
+};
 function sinTrabajadores(){
-  return '<div class="empty">'+I.user+'<p>Todavía no hay ningún trabajador.</p>'+
+  return tarjetaInstalar()+'<div class="empty">'+I.user+'<p>Todavía no hay ningún trabajador.</p>'+
          '<p class="small">Crea el primero para empezar a apuntar sus vacaciones.</p></div>'+
          '<button class="btn primary big block" data-act="ir" data-h="#/trabajador/nuevo">'+I.mas+' Nuevo trabajador</button>';
 }
@@ -572,6 +618,7 @@ VISTAS['inicio']=function(){
        (D.meta.ultimaCopia?'La última fue hace '+dias+' días.':'Todavía no has hecho ninguna.')+
        ' Los datos están sólo en este móvil. <a href="#/ajustes">Hacerla ahora</a></div></div>';
   }
+  h+=tarjetaInstalar();
   h+=selTrab()+selAnio();
   h+='<button class="btn primary big block" data-act="nuevo-per">'+I.mas+' Apuntar vacaciones</button>';
 
@@ -752,7 +799,9 @@ VISTAS['festivos']=function(){
     '<div class="wk">'+[1,2,3,4,5,6,0].map(d=>'<label><input type="checkbox" data-ch="nolab" value="'+d+'"'+
       (D.ajustes.noLaborables.indexOf(d)>=0?' checked':'')+'>'+DIAL[d]+'</label>').join('')+'</div></div></div>'+
     '<div class="note i">'+I.info+'<div>Toca un día para marcarlo como <b>festivo</b>; vuelve a tocarlo para dejarlo laborable. El calendario laboral es el mismo para todos los trabajadores.</div></div>'+
-    '<button class="btn block mb" data-act="nacionales">'+I.mas+' Añadir los festivos nacionales de '+anio+'</button>'+
+    (anio===2026
+      ? '<button class="btn block mb" data-act="tarragona26">'+I.mas+' Poner el calendario laboral de Tarragona 2026</button>'
+      : '<button class="btn block mb" data-act="nacionales">'+I.mas+' Añadir los festivos nacionales de '+anio+'</button>')+
     calendario(null,null,null);
   h+='<div class="card"><div class="card-h">Festivos de '+anio+' ('+lista.length+')</div>';
   if(!lista.length) h+='<div class="empty" style="padding:22px">'+I.cal+'<p class="small">Aún no hay festivos marcados en '+anio+'.</p></div>';
@@ -775,6 +824,11 @@ IN['nolab']=el=>{
 };
 IN['festnom']=el=>{ const f=D.festivos.find(x=>x.fecha===el.dataset.f); if(f){ f.nombre=el.value.trim(); guardar(); } };
 ACT['quitar-fest']=async el=>{ D.festivos=D.festivos.filter(f=>f.fecha!==el.dataset.f); await guardar(); render(); };
+ACT['tarragona26']=async()=>{
+  const n=ponTarragona2026();
+  await guardar(); render();
+  toast(n? pl(n,'festivo añadido','festivos añadidos') : 'Ya estaban todos');
+};
 ACT['nacionales']=async()=>{
   let n=0;
   nacionales(anio).forEach(x=>{ if(!D.festivos.some(f=>f.fecha===x[0])){ D.festivos.push({fecha:x[0], nombre:x[1]}); n++; } });
@@ -978,6 +1032,7 @@ VISTAS['ajustes']=function(){
   const dias=diasDesde(D.meta.ultimaCopia);
   let h='';
   const compartible=puedeCompartirFicheros();
+  h+=tarjetaInstalar();
   h+='<div class="card"><div class="card-h">Copia de seguridad</div><div style="padding:14px">'+
      (D.meta.ultimaCopia
         ? '<div class="small muted mb">Última copia: '+fFecha(D.meta.ultimaCopia)+(dias>0?' (hace '+pl(dias,'día','días')+')':' (hoy)')+'</div>'
@@ -1092,7 +1147,7 @@ async function restaurarTexto(txt){
   const d=validarCopia(JSON.parse(txt));
   if(!confirm('Vas a sustituir TODOS los datos de este móvil por los de la copia:\n\n'+
               pl(d.periodos.length,'apunte','apuntes')+', '+pl(d.trabajadores.length,'trabajador','trabajadores')+'.\n\n¿Seguir?')) return false;
-  D=migrar(d); await guardar(); aplicarTema();
+  D=migrar(d); precarga2026(); await guardar(); aplicarTema();
   toast('Copia restaurada'); ir('#/'); render();
   return true;
 }
@@ -1177,6 +1232,9 @@ ACT['guardar-emp']=async()=>{
   await guardar(); toast('Guardado'); volver();
 };
 
+/* Se escucha ya, sin esperar al arranque, para no perder el aviso de Chrome. */
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); instalador=e; });
+
 /* =========================================================
    ARRANQUE
    ========================================================= */
@@ -1187,6 +1245,10 @@ ACT['guardar-emp']=async()=>{
   window.addEventListener('hashchange',render);
   if(!location.hash) location.replace('#/');
   render();
+  const repinta=()=>{ if(vista==='inicio'||vista==='ajustes') render(); };
+  if(instalador) repinta();
+  window.addEventListener('beforeinstallprompt',()=>setTimeout(repinta,0));
+  window.addEventListener('appinstalled',()=>{ instalador=null; toast('Aplicación instalada'); repinta(); });
   try{
     if(navigator.storage && navigator.storage.persist){
       const ya=await navigator.storage.persisted();

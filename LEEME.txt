@@ -15,7 +15,9 @@ cobertura una vez abierta la primera vez.
 Instalarla
 ----------
 1. Abrir en Chrome del Android: https://jorditgn.github.io/control-vacaciones/
-2. Menú ⋮ → «Añadir a pantalla de inicio» (o «Instalar aplicación»).
+2. Pulsar el botón «Instalar» que sale arriba en Inicio.
+   Si no sale el botón: menú ⋮ → «Añadir a pantalla de inicio» → «Instalar».
+   Si se abrió desde WhatsApp o Gmail, abrirla antes en Chrome.
 3. Abrirla siempre desde el icono (morado, con un calendario).
 
 
@@ -27,7 +29,8 @@ Primeros pasos
    - marcar qué días de la semana no se trabajan (de entrada, sábado y domingo);
    - pulsar «Añadir los festivos nacionales» del año;
    - tocar en el calendario los festivos autonómicos y locales.
-   Hay que hacerlo UNA VEZ POR AÑO. Si un año no tiene festivos marcados,
+   2026 ya viene relleno con el calendario laboral de Tarragona.
+   Para los demás años hay que hacerlo UNA VEZ POR AÑO. Si un año no tiene festivos marcados,
    la app lo avisa.
 
 
