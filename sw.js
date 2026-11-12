@@ -3,7 +3,7 @@
 /* Esta app comparte dominio con otras (el Diario de trabajos y Control de horas),
    y las cachés son del dominio entero: sólo tocamos las que empiezan por nuestro prefijo. */
 const PREFIJO  = 'vacaciones-';
-const VERSION  = 'v3';
+const VERSION  = 'v4';
 const CACHE    = PREFIJO + VERSION;
 const FICHEROS = [
   './',
